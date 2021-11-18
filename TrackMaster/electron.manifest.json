@@ -1,0 +1,36 @@
+{
+  "executable": "TrackMaster",
+  "splashscreen": {
+    "imageFile": "/wwwroot/assets/img/SplashScreen.png"
+  },
+  "name": "TrackMaster",
+  "author": "Satpal Singh",
+  "singleInstance": false,
+  "aspCoreBackendPort": 5000,
+  "environment": "Production",
+  "build": {
+    "appId": "com.TrackMaster.app",
+    "productName": "TrackMaster",
+    "copyright": "Copyright © 2020",
+    "buildVersion": "0.1.0-Alpha",
+    "compression": "maximum",    
+    "directories": {
+      "output": "../../../bin/Desktop"
+    },
+    "extraResources": [
+      {
+        "from": "./bin",
+        "to": "bin",
+        "filter": [ "**/*" ]
+      }
+    ],
+    "files": [
+      {
+        "from": "./ElectronHostHook/node_modules",
+        "to": "ElectronHostHook/node_modules",
+        "filter": [ "**/*" ]
+      },
+      "**/*"
+    ]
+  }
+}

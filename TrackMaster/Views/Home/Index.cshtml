@@ -1,0 +1,33 @@
+﻿@{
+    ViewData["Title"] = "Home";
+}
+
+@section scripts{
+    <script>
+        if ('@ViewBag.ControllerFound' === true) {
+            $("#loading").hide();
+            $("#playerinfo").show();
+        }
+        else {
+            $("#loading").show();
+            $("#playerinfo").hide();
+        }
+
+    </script>
+}
+<div class="row">
+    <div class="col-md-7">
+        <div id="playerinfo">
+            @await Html.PartialAsync("/Views/Shared/_PlayerOneInfo.cshtml")
+            <br />
+            @await Html.PartialAsync("/Views/Shared/_PlayerTwoInfo.cshtml")
+        </div>
+        <div id="loading" class="loading" style="display:none; justify-content:center; align-items:center; display:flex; min-height:20vh;">
+            <center><img src="~/Images/ajax-loader.gif" />  Searching for controller...please wait!</center>
+        </div>
+    </div>
+    <br />
+    <div class="col-md-5">
+        @await Html.PartialAsync("/Views/Shared/_DeviceNetworkInformation.cshtml")
+    </div>
+</div>

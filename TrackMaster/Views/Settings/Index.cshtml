@@ -1,0 +1,56 @@
+﻿@{
+    ViewData["Title"] = "Settings";
+}
+
+@section scripts{
+    <script>
+        var onSuccess = function (data) {
+            $('.toast').find("strong.mr-auto").html(data.title);
+            $('.toast').find("div.toast-body").html(data.message);
+            $('.toast').toast('show');
+        };
+
+        var onFailed = function (data) {
+        };
+    </script>
+}
+
+@{
+    @await Html.PartialAsync("/Views/Shared/_ValidationScriptsPartial.cshtml")
+    @model TrackMaster.Models.TwitchCredentialsModel   
+    
+}
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                Twitch Bot Settings
+            </div>
+            <div class="card-body">
+                <form id="formsavesettings" asp-controller="Settings" asp-action="SaveSettings"                      
+                      data-ajax-failure="onFailed" data-ajax-success="onSuccess"
+                      data-ajax="true" data-ajax-method="post">
+                    <div class="form-group">
+                        @Html.LabelFor(p => Model.Username)
+                        @Html.TextBoxFor(p => Model.Username, new { @Id = "Username", @class = "form-control", @placeholder = "Enter username" })
+                        @Html.ValidationMessageFor(p => Model.Username, "", new { @class = "text-danger" })
+                        <small id="usernameHelp" class="form-text text-muted">Enter the Twitch bot username</small>
+                    </div>
+                    <div class="form-group">
+                        @Html.LabelFor(p => Model.Password)
+                        @Html.PasswordFor(p => Model.Password, new { @Id = "Password", @class = "form-control", @placeholder = "Enter OAuth password" })
+                        @Html.ValidationMessageFor(p => Model.Password, "", new { @class = "text-danger" })
+                        <small id="inputPasswordHelp" class="form-text text-muted">Enter the password as oauth:--string--</small>
+                    </div>
+                    <div class="form-group">
+                        @Html.LabelFor(p => Model.Channel)
+                        @Html.TextBoxFor(p => Model.Channel, new { @Id = "Channel", @class = "form-control", @placeholder = "Enter channel name" })
+                        @Html.ValidationMessageFor(p => Model.Channel, "", new { @class = "text-danger" })
+                        <small id="usernameHelp" class="form-text text-muted">Enter the twitch channel name</small>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Save</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

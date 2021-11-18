@@ -1,0 +1,2 @@
+2021-11-08 21:23:45.615 +11:00 [Error] Twitch Bot connection retry
+2021-11-08 22:50:56.708 +11:00 [Error] Twitch Bot connection retry
