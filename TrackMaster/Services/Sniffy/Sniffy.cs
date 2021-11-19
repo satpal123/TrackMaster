@@ -5,8 +5,8 @@ using Microsoft.Extensions.Logging;
 using PacketDotNet;
 using SharpPcap;
 using SharpPcap.LibPcap;
-using SharpPcap.Npcap;
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Net;
@@ -25,49 +25,40 @@ namespace TrackMaster.Services.Sniffy
         #region Variable declarations
         public static string appfullpath;
         private readonly IHubContext<TrackistHub> _tracklisthubContext;
+
         private readonly string _ethernetdevice;
         private readonly string _controllerIP;
+
         private static string playerstatus;
         public static int globalplayernumber1;
-        public static string globalplayerstatus1;
-        public static string globalplayerloadeddevice1;
-        public static string globalplayermaster1;
-        public static string globalplayerfader1;
+        public static string globalplayerstatus1, globalplayerloadeddevice1, globalplayermaster1, globalplayerfader1;
         public static int globalplayernumber2;
-        public static string globalplayerstatus2;
-        public static string globalplayerloadeddevice2;
-        public static string globalplayermaster2;
-        public static string globalplayerfader2;
+        public static string globalplayerstatus2, globalplayerloadeddevice2, globalplayermaster2, globalplayerfader2;
         private static int deviceloadedfrom;
         private static string loadeddevice;
         private static string playermaster;
-        private static string globalrekordboxid1;
-        private static Tuple<int, string> deck1;
-        private static string globalrekordboxid2;
-        private static Tuple<int, string> deck2;
-        private static int countrbidoccurance1;
-        private static int countrbidoccurance2;
-        private static int trackpathid;
-        private static int _player2;
-        private static int _player1;
-        public static string trackpath;
-        private static int t;
-        private static int u;
-        public static string trackpath2;
+        private static string globalrekordboxid1, globalrekordboxid2;
+        private static int playernumber;
         private static string fadermaster;
         public static string playername;
-        private static int trackTitle1;
-        private static int trackTitle2;
-        private static string tracktitle1;
-        private static string trackartist1;
-        private static string tracktitle2;
-        private static string trackartist2;
-        private int playernumber;
-        private static string currentpcid;
+
+        private static Tuple<int, string> deck1, deck2;
+        
+        public static string trackpath, trackpath2;        
+        private static string tracktitle1, trackartist1;
+        private static string tracktitle2, trackartist2;
+        private static string albumartid1, albumartid2;
+
+        private static List<string> currentpcid;
         private int j = 0;
+        private static int countrbidoccurance1, countrbidoccurance2;
+        
         private readonly ILogger _logger;
-        public static bool ControllerFound { get; private set; } = false;
-        public static string ControllerIP { get; private set; }
+        public static bool ControllerFound = false;
+        public static string ControllerIP;
+
+        private const string DJ_LINK_PACKET = "5173707431576D4A4F4C";
+        private const string MAGIC_NUMBER = "11872349AE";
         #endregion
         public Sniffy(IConfiguration configuration, IHubContext<TrackistHub> synchub, ILogger<Sniffy> logger)
         {
@@ -126,23 +117,16 @@ namespace TrackMaster.Services.Sniffy
                     var device = devices[i];
 
                     // Register our handler function to the 'packet arrival' event
-                    device.OnPacketArrival +=
-                       new PacketArrivalEventHandler(device_OnPacketArrivalUdp);
-                    device.OnPacketArrival +=
-                        new PacketArrivalEventHandler(device_OnPacketArrivalTcp);
+                    device.OnPacketArrival += new PacketArrivalEventHandler(device_OnPacketArrivalUdp);
+                    device.OnPacketArrival += new PacketArrivalEventHandler(device_OnPacketArrivalTcp);
 
                     // Open the device for capturing
-                    int readTimeoutMilliseconds = 1000;
+                    int readTimeoutMilliseconds = 500;
 
-                    if (device is NpcapDevice)
-                    {
-                        var nPcap = device as NpcapDevice;
-                        nPcap.Open(OpenFlags.DataTransferUdp | OpenFlags.NoCaptureLocal, readTimeoutMilliseconds);
-                    }
-                    else if (device is LibPcapLiveDevice)
+                    if (device is LibPcapLiveDevice)
                     {
                         var livePcapDevice = device as LibPcapLiveDevice;
-                        livePcapDevice.Open(DeviceMode.Promiscuous, readTimeoutMilliseconds);
+                        livePcapDevice.Open(DeviceModes.Promiscuous, readTimeoutMilliseconds);
                     }
                     else
                     {
@@ -196,20 +180,14 @@ namespace TrackMaster.Services.Sniffy
             await _tracklisthubContext.Clients.All.SendAsync("DeviceAndTwitchStatus", 3, "Searching for Device...");
 
             // Register our handler function to the 'packet arrival' event
-            device.OnPacketArrival +=
-               new PacketArrivalEventHandler(device_OnPacketArrivalUdpInitial);
+            device.OnPacketArrival += new PacketArrivalEventHandler(device_OnPacketArrivalUdpInitial);
 
             // Open the device for capturing
-            int readTimeoutMilliseconds = 1000;
-            if (device is NpcapDevice)
-            {
-                var nPcap = device as NpcapDevice;
-                nPcap.Open(OpenFlags.DataTransferUdp | OpenFlags.NoCaptureLocal, readTimeoutMilliseconds);
-            }
-            else if (device is LibPcapLiveDevice)
+            int readTimeoutMilliseconds = 500;
+           if (device is LibPcapLiveDevice)
             {
                 var livePcapDevice = device as LibPcapLiveDevice;
-                livePcapDevice.Open(DeviceMode.Promiscuous, readTimeoutMilliseconds);
+                livePcapDevice.Open(DeviceModes.Promiscuous, readTimeoutMilliseconds);
             }
             else
             {
@@ -223,12 +201,11 @@ namespace TrackMaster.Services.Sniffy
             device.StopCapture();
             device.Close();
         }
-        private void device_OnPacketArrivalUdpInitial(object sender, CaptureEventArgs e)
+        private void device_OnPacketArrivalUdpInitial(object sender, PacketCapture e)
         {
             currentpcid = GetLocalIPAddress();
-
-            var packet = Packet.ParsePacket(e.Packet.LinkLayerType, e.Packet.Data);
-
+            RawCapture _packet = e.GetPacket();
+            var packet = Packet.ParsePacket(_packet.LinkLayerType, _packet.Data);
             var udpPacket = packet.Extract<UdpPacket>();
 
             if (udpPacket != null)
@@ -245,181 +222,139 @@ namespace TrackMaster.Services.Sniffy
 
                     if (dstPort == 50000 & result.StartsWith("5173707431576D4A4F4C06"))
                     {
-                        if (srcIp.ToString() != currentpcid)
+                        var res = (from ip in currentpcid
+                                   where ip.Contains(srcIp.ToString())
+                                   select ip).FirstOrDefault();
+
+                        if (srcIp.ToString() != res)
                         {
                             ControllerFound = true;
                             ControllerIP = srcIp.ToString();
-
-                            string test = BitConverter.ToString(magicnumber[44..48]).Replace("-", string.Empty);
-
-                            var y = IPAddress.HostToNetworkOrder(int.Parse(test, NumberStyles.HexNumber)).ToString("X");
-
-                            var ip = new IPAddress(long.Parse(y, NumberStyles.AllowHexSpecifier));
                         }
                     }
                 }
             }
         }
-        private void device_OnPacketArrivalTcp(object sender, CaptureEventArgs e)
+        private void device_OnPacketArrivalTcp(object sender, PacketCapture e)
         {
             try
-            {
-                //globalplayernumber1 = 11; globalplayerfader1 = "Fader open"; globalplayerstatus1 = "Player is playing normally"; trackpath = "Test";
-
-                var packet = Packet.ParsePacket(e.Packet.LinkLayerType, e.Packet.Data);
+            {               
+                RawCapture pack = e.GetPacket();
+                var packet = Packet.ParsePacket(pack.LinkLayerType, pack.Data);
 
                 var tcpPacket = packet.Extract<TcpPacket>();
 
                 if (tcpPacket != null)
                 {
-                    var ipPacket = (IPPacket)tcpPacket.ParentPacket;
+                    IPPacket ipPacket = (IPPacket)tcpPacket.ParentPacket;
+                    byte[] magicnumberPacket = ipPacket.PayloadPacket.PayloadDataSegment.Bytes.ToArray();
+                    string result = BitConverter.ToString(magicnumberPacket).Replace("-", string.Empty).Substring(108);
+                    IPAddress srcIp = ipPacket.SourceAddress;
+                    
 
-                    var magicnumber = ipPacket.PayloadPacket.PayloadDataSegment.Bytes.Skip(54).ToArray();
-
-                    var result = BitConverter.ToString(magicnumber).Replace("-", string.Empty);
-
-                    if (result.Contains("11872349AE11"))
+                    if (result.Contains(MAGIC_NUMBER))
                     {
-                        var identity = Regex.Matches(result, "1021020F02140000000C060600000000000000000000");
-
-                        var identity2 = Regex.Matches(result, "1041010F0C140000000C060606020602060606060606");
-
-                        var metadataidentity = "1041010F0C140000000C060606020602060606060606";
-
-                        if (identity.Count == 1)
-                        {
-                            playernumber = Convert.ToInt32(BitConverter.ToString(magicnumber[33..34]), 16);
-                            var rbid = result.Substring(76, 8);
-
-                            if (playernumber == 11)
-                            {
-                                if (globalrekordboxid1 != rbid)
-                                {
-                                    t = 0;
-                                }
-
-                                globalrekordboxid1 = rbid;
-                                deck1 = Tuple.Create(playernumber, rbid);
-
-                            }
-                            if (playernumber == 12)
-                            {
-                                if (globalrekordboxid2 != rbid)
-                                {
-                                    u = 0;
-                                }
-                                globalrekordboxid2 = rbid;
-                                deck2 = Tuple.Create(playernumber, rbid);
-                            }
-                        }
-
-                        if (identity2.Count >= 10)
-                        {
-                            if (globalrekordboxid1 != null)
-                            {
-                                countrbidoccurance1 = Regex.Matches(result, globalrekordboxid1).Count;
-                                if (countrbidoccurance1 != 0)
-                                {
-                                    if (countrbidoccurance1 >= 2)
-                                    {
-                                        trackTitle1 = result.IndexOf(metadataidentity, result.IndexOf(metadataidentity));
-                                    }                                   
-                                }
-
-                                _player1 = 11;
-                            }
-                            if (globalrekordboxid2 != null)
-                            {
-                                countrbidoccurance2 = Regex.Matches(result, globalrekordboxid2).Count;
-                                if (countrbidoccurance2 != 0)
-                                {
-                                    if (countrbidoccurance2 >= 2)
-                                    {
-                                        trackTitle2 = result.IndexOf(metadataidentity, result.IndexOf(metadataidentity));
-                                    }                                  
-                                }
-
-                                _player2 = 12;
-                            }
-
-                            if (countrbidoccurance1 >= 1)
-                            {
-                                t++;
-                                if (t == 1)
-                                {
-                                    if (_player1 == 11)
-                                    {
-                                        var title = result[trackTitle1..].Split(metadataidentity)[1].Split("11000000")[2];
-                                        var artist = result[trackTitle1..].Split(metadataidentity)[2].Split("11000000")[2];
-
-                                        trackartist1 = (artist != "00") ? HextoString(artist[14..]).Replace("\0", string.Empty).Trim() : "";
-                                        tracktitle1 = (title != "00") ? HextoString(title[14..]).Replace("\0", string.Empty).Trim() : "" ;
-
-                                        if (tracktitle1 != "" & trackartist1 != "")
-                                        {
-                                            trackpath = trackartist1.Remove(trackartist1.Length - 1) + " - " + tracktitle1.Remove(tracktitle1.Length - 1);
-                                        }
-                                        else if (tracktitle1 != "" & trackartist1 == "")
-                                        {
-                                            trackpath = tracktitle1.Remove(tracktitle1.Length - 1);
-                                        }
-                                        else
-                                        {
-                                            trackpath = "ID - ID";
-                                        }                                        
-
-                                        _tracklisthubContext.Clients.All.SendAsync("PlayerOne", 5, trackpath);
-
-                                        t = 4;
-                                    }
-                                }
-                            }
-
-                            if (countrbidoccurance2 >= 1)
-                            {
-                                u++;
-                                if (u == 1)
-                                {
-                                    if (_player2 == 12)
-                                    {
-                                        var title = result[trackTitle2..].Split(metadataidentity)[1].Split("11000000")[2];
-                                        var artist = result[trackTitle2..].Split(metadataidentity)[2].Split("11000000")[2];
-
-                                        trackartist2 = (artist != "00") ? HextoString(artist[14..]).Replace("\0", string.Empty).Trim() : "";
-                                        tracktitle2 = (title != "00") ? HextoString(title[14..]).Replace("\0", string.Empty).Trim() : "";
-
-                                        if (tracktitle2 != "" & trackartist2 != "")
-                                        {
-                                            trackpath2 = trackartist2.Remove(trackartist2.Length - 1) + " - " + tracktitle2.Remove(tracktitle2.Length - 1);
-                                        }
-                                        else if (tracktitle2 != "" & trackartist2 == "")
-                                        {
-                                            trackpath2 = tracktitle2.Remove(tracktitle2.Length - 1);
-                                        }
-                                        else
-                                        {
-                                            trackpath2 = "ID - ID";
-                                        }
-
-                                        _tracklisthubContext.Clients.All.SendAsync("PlayerTwo", 5, trackpath2);
-                                        u = 4;
-                                    }
-                                }
-                            }
-                        }
+                        GetPlayerNumberAndRekordBoxId(magicnumberPacket, result);
+                        Players(result);
                     }
-                }
+                }              
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex.Message);
                 Console.WriteLine(ex.Message);
             }            
-        }        
-        private void device_OnPacketArrivalUdp(object sender, CaptureEventArgs e)
-        {            
-            var packet = Packet.ParsePacket(e.Packet.LinkLayerType, e.Packet.Data);
+        }
+        private void Players(string result)
+        {
+            if (result.Contains("1041010F0C140000000C060606020602060606060606"))
+            {
+                Player1(result);
+                Player2(result);
+            }
+        }
 
+        private void GetPlayerNumberAndRekordBoxId(byte[] magicnumberPacket, string result)
+        {
+            if (result.Contains("1021020F02140000000C060600000000000000000000"))
+            {
+                int mp_len = magicnumberPacket.Length;
+
+                playernumber = Convert.ToInt32(BitConverter.ToString(magicnumberPacket[(mp_len - 9)..(mp_len - 8)]), 16);
+                string rbid = result.Substring(result.Length - 8, 8);
+
+                if (playernumber == 11)
+                {
+                    globalrekordboxid1 = rbid;
+                    deck1 = Tuple.Create(playernumber, rbid);
+                }
+
+                if (playernumber == 12)
+                {
+                    globalrekordboxid2 = rbid;
+                    deck2 = Tuple.Create(playernumber, rbid);
+                }
+            }
+        }
+        private void Player1(string result)
+        {
+            countrbidoccurance1 = globalrekordboxid1 != null ? Regex.Matches(result, globalrekordboxid1).Count : 0;
+
+            if (countrbidoccurance1 >= 3)
+            {
+                (tracktitle1, trackartist1, albumartid1) = GetTrackMetaData(result);
+
+                if (tracktitle1 != null | trackartist1 != null)
+                {
+                    trackpath = tracktitle1 != null & trackartist1 != null
+                        ? trackartist1.Remove(trackartist1.Length - 1) + " - " + tracktitle1.Remove(tracktitle1.Length - 1)
+                        : tracktitle1 != null & trackartist1 == null ? tracktitle1.Remove(tracktitle1.Length - 1) : "ID - ID";
+
+                    //_tracklisthubContext.Clients.All.SendAsync("PlayerOne", 5, trackpath);
+                }
+            }
+        }
+
+        private void Player2(string result)
+        {
+            countrbidoccurance2 = globalrekordboxid2 != null ? Regex.Matches(result, globalrekordboxid2).Count : 0;
+
+            if (countrbidoccurance2 >= 3)
+            {
+                (tracktitle2, trackartist2, albumartid2) = GetTrackMetaData(result);
+
+                if (tracktitle2 != null | trackartist2 != null)
+                {
+                    trackpath2 = tracktitle2 != null & trackartist2 != null
+                    ? trackartist2.Remove(trackartist2.Length - 1) + " - " + tracktitle2.Remove(tracktitle2.Length - 1)
+                    : tracktitle2 != null & trackartist2 == null ? tracktitle2.Remove(tracktitle2.Length - 1) : "ID - ID";
+
+                   // _tracklisthubContext.Clients.All.SendAsync("PlayerTwo", 5, trackpath2);
+                }
+            }
+        }
+        private Tuple<string, string, string> GetTrackMetaData(string result)
+        {
+            string[] metadataPacket = result.Split(MAGIC_NUMBER);
+            if (metadataPacket[1].Contains("1041010F0C14") & metadataPacket.Length >= 13)
+            {
+                string title = metadataPacket[1].Split("11000000")[2];
+                string artist = metadataPacket[2].Split("11000000")[2];
+                string albumartid = null;
+
+                title = title.Length != 2 ? HextoString(title[14..]).Replace("\0", string.Empty).Trim() : null;
+                artist = artist.Length != 2 ? HextoString(artist[14..]).Replace("\0", string.Empty).Trim() : null;
+                albumartid = null;
+
+                return new Tuple<string, string, string>(title, artist, albumartid);
+            }
+            return new Tuple<string, string, string>(null, null, null);
+        }
+
+        private void device_OnPacketArrivalUdp(object sender, PacketCapture e)
+        {
+            RawCapture _packet = e.GetPacket();
+            var packet = Packet.ParsePacket(_packet.LinkLayerType, _packet.Data);
             var udpPacket = packet.Extract<UdpPacket>();
 
             if (udpPacket != null)
@@ -434,12 +369,12 @@ namespace TrackMaster.Services.Sniffy
 
                     var result = BitConverter.ToString(magicnumber).Replace("-", string.Empty);
 
-                    if (srcIp.ToString() == ControllerIP & dstPort == 50002 & result.StartsWith("5173707431576D4A4F4C"))
+                    if (srcIp.ToString() == ControllerIP & dstPort == 50002 & result.StartsWith(DJ_LINK_PACKET))
                     {
                         playername = Encoding.Default.GetString(magicnumber[11..24]).Replace("\0", string.Empty);
                         var playernumber = Convert.ToInt32(BitConverter.ToString(magicnumber[33..34]), 16);
 
-                        if (result.StartsWith("5173707431576D4A4F4C0A"))
+                        if (result.StartsWith(DJ_LINK_PACKET + "0A"))
                         {
                             _tracklisthubContext.Clients.All.SendAsync("DeviceAndTwitchStatus", 1, playername + " (" + ControllerIP + ")");
 
@@ -533,19 +468,9 @@ namespace TrackMaster.Services.Sniffy
                 }                
             }
         }
-        public static string GetLocalIPAddress()
+        public static List<string> GetLocalIPAddress()
         {
-            //var host = Dns.GetHostEntry(Dns.GetHostName());
-            //foreach (var ip in host.AddressList)
-            //{
-            //    if (ip.AddressFamily == AddressFamily.InterNetwork)
-            //    {
-            //        return ip.ToString();
-            //    }
-            //}
-            //throw new Exception("No network adapters with an IPv4 address in the system!");
-
-            var GetIP = "";
+            List<string> GetIP = new List<string>();
 
             foreach (NetworkInterface ni in NetworkInterface.GetAllNetworkInterfaces())
             {
@@ -555,14 +480,12 @@ namespace TrackMaster.Services.Sniffy
                     {
                         if (ip.Address.AddressFamily == AddressFamily.InterNetwork)
                         {
-                            GetIP = ip.Address.ToString();
+                            GetIP.Add(ip.Address.ToString());
                         }
                     }
-                }                
+                }
             }
-
             return GetIP;
-
         }
         public static string HextoString(string InputText)
         {

@@ -21,10 +21,11 @@ namespace TrackMaster.Controllers
 
                 });
 
-                Electron.IpcMain.On("open-ex-links", async (args) =>
-                {
-                    await Electron.Shell.OpenExternalAsync("https://github.com/ElectronNET");
-                });
+                //Electron.IpcMain.On("open-ex-links", async (args) =>
+                //{
+                //    await Electron.Shell.OpenExternalAsync("https://github.com/ElectronNET");
+                //});
+  
             }
 
             return View();

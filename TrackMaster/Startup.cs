@@ -57,7 +57,8 @@ namespace TrackMaster
             });
 
             Task.Run(async () =>
-            {
+            {               
+
                 var browserWindowOptions = new BrowserWindowOptions
                 {
                     WebPreferences = new WebPreferences
@@ -65,7 +66,12 @@ namespace TrackMaster
                         NodeIntegration = false
                     }
                 };
-
+                browserWindowOptions.Center = true;
+                browserWindowOptions.Height = 800;
+                browserWindowOptions.Width = 1400;     
+                browserWindowOptions.AutoHideMenuBar = true;
+                browserWindowOptions.Resizable = false;
+                
                 await Electron.WindowManager.CreateWindowAsync(browserWindowOptions);
             });
 

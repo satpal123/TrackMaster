@@ -5,14 +5,14 @@
   },
   "name": "TrackMaster",
   "author": "Satpal Singh",
-  "singleInstance": false,
-  "aspCoreBackendPort": 5000,
+  "singleInstance": true,
+  "aspCoreBackendPort": 8888,
   "environment": "Production",
   "build": {
     "appId": "com.TrackMaster.app",
     "productName": "TrackMaster",
-    "copyright": "Copyright © 2020",
-    "buildVersion": "0.1.0-Alpha",
+    "copyright": "Copyright © 2021",
+    "buildVersion": "2.0.0-Alpha",
     "compression": "maximum",    
     "directories": {
       "output": "../../../bin/Desktop"

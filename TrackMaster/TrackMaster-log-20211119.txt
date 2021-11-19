@@ -1,0 +1,9 @@
+2021-11-19 15:57:47.828 +11:00 [Error] Twitch Bot connection retry
+2021-11-19 16:01:15.504 +11:00 [Error] Twitch Bot connection retry
+2021-11-19 16:06:34.189 +11:00 [Error] Twitch Bot connection retry
+2021-11-19 16:13:48.693 +11:00 [Error] Twitch Bot connection retry
+2021-11-19 16:16:17.993 +11:00 [Error] Twitch Bot connection retry
+2021-11-19 16:24:56.830 +11:00 [Error] Twitch Bot connection retry
+2021-11-19 16:27:45.400 +11:00 [Error] Twitch Bot connection retry
+2021-11-19 16:31:25.359 +11:00 [Error] Twitch Bot connection retry
+2021-11-19 16:35:50.974 +11:00 [Error] Twitch Bot connection retry
