@@ -7,3 +7,41 @@
 2021-11-19 16:27:45.400 +11:00 [Error] Twitch Bot connection retry
 2021-11-19 16:31:25.359 +11:00 [Error] Twitch Bot connection retry
 2021-11-19 16:35:50.974 +11:00 [Error] Twitch Bot connection retry
+2021-11-19 17:02:05.634 +11:00 [Error] Twitch Bot connection retry
+2021-11-19 17:02:49.058 +11:00 [Error] Twitch Bot connection retry
+2021-11-19 17:02:55.923 +11:00 [Error] The view '"Index"' was not found. Searched locations: ["/Views/Overlay/Index.cshtml", "/Views/Shared/Index.cshtml"]
+2021-11-19 17:02:55.931 +11:00 [Error] An unhandled exception has occurred while executing the request.
+System.InvalidOperationException: The view 'Index' was not found. The following locations were searched:
+/Views/Overlay/Index.cshtml
+/Views/Shared/Index.cshtml
+   at Microsoft.AspNetCore.Mvc.ViewEngines.ViewEngineResult.EnsureSuccessful(IEnumerable`1 originalLocations)
+   at Microsoft.AspNetCore.Mvc.ViewFeatures.ViewResultExecutor.ExecuteAsync(ActionContext context, ViewResult result)
+   at Microsoft.AspNetCore.Mvc.ViewResult.ExecuteResultAsync(ActionContext context)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeNextResultFilterAsync>g__Awaited|30_0[TFilter,TFilterAsync](ResourceInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.Rethrow(ResultExecutedContextSealed context)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.ResultNext[TFilter,TFilterAsync](State& next, Scope& scope, Object& state, Boolean& isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.InvokeResultFilters()
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeNextResourceFilter>g__Awaited|25_0(ResourceInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.Rethrow(ResourceExecutedContextSealed context)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.Next(State& next, Scope& scope, Object& state, Boolean& isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.InvokeFilterPipelineAsync()
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at Microsoft.AspNetCore.Routing.EndpointMiddleware.<Invoke>g__AwaitRequestTask|6_0(Endpoint endpoint, Task requestTask, ILogger logger)
+   at Microsoft.AspNetCore.Authorization.AuthorizationMiddleware.Invoke(HttpContext context)
+   at Microsoft.AspNetCore.Diagnostics.DeveloperExceptionPageMiddleware.Invoke(HttpContext context)
+2021-11-19 17:12:29.463 +11:00 [Error] Twitch Bot connection retry
+2021-11-19 17:35:03.303 +11:00 [Error] Twitch Bot connection retry
+2021-11-19 17:40:05.700 +11:00 [Error] Twitch Bot connection retry
+2021-11-19 17:41:45.465 +11:00 [Error] Twitch Bot connection retry
+2021-11-19 17:47:09.824 +11:00 [Error] Twitch Bot connection retry
+2021-11-19 18:06:51.896 +11:00 [Error] Twitch Bot connection retry
+2021-11-19 18:08:08.670 +11:00 [Error] Twitch Bot connection retry
+2021-11-19 18:23:00.694 +11:00 [Error] Twitch Bot connection retry
+2021-11-19 18:26:55.565 +11:00 [Error] Twitch Bot connection retry
+2021-11-19 19:37:43.520 +11:00 [Error] Twitch Bot connection retry
+2021-11-19 19:40:04.054 +11:00 [Error] Twitch Bot connection retry
+2021-11-19 20:23:06.535 +11:00 [Error] Twitch Bot connection retry
+2021-11-19 20:23:26.452 +11:00 [Error] Twitch Bot connection retry

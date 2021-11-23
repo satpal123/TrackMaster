@@ -1,0 +1,36 @@
+﻿@{
+    Layout = null;
+    ViewData["Title"] = "Now Playing";
+ }
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" />
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/lib/jquery-ajax-unobtrusive/jquery.unobtrusive-ajax.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    <script src="~/lib/microsoft/signalr/dist/browser/signalr.js"></script>
+    <script src="~/js/trackist.js"></script>
+</head>
+
+<body style="background-color: transparent;">
+    <div class="container mt-3">
+        <div class="col-3">
+            <h6 id="now-playing" class="text-white overlay-bg-color w-50 text-center">NOW PLAYING</h6>
+        </div>
+    </div>
+    <div class="container">
+        <div class="col-6">
+            <h4 id="artist" class="text-white" style="text-shadow: 2px 2px 2px #000000;"></h4>
+            <h5 id="track" class="text-white mt-n1" style="text-shadow: 2px 2px 2px #000000;"></h5>
+        </div>
+    </div>
+
+
+</body>
+ </html>

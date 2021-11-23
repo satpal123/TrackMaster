@@ -1,0 +1,43 @@
+﻿@{
+    ViewData["Title"] = "Overlay";
+}
+
+@section scripts{
+    <script>
+       function myFunction() {
+          /* Get the text field */
+          var copyText = document.getElementById("nowplaying");
+
+          /* Select the text field */
+          copyText.select();
+          copyText.setSelectionRange(0, 99999); /* For mobile devices */
+
+           /* Copy the text inside the text field */
+          navigator.clipboard.writeText(copyText.value);         
+        }
+
+        $('#sidebar').find('a[href="' + location.pathname + '"]').closest('li').addClass('active')
+    </script>
+}
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+               Overlay
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="control-label">Copy your Overlay :</div>
+                    </div>
+                    <div class="col-md-8">                        
+                       <div class="input-group mb-3">
+                      <input type="text" class="form-control" id="nowplaying" readonly value="http://localhost:8888/overlay/NowPlaying">
+                      <button class="btn btn-secondary" type="button" id="button-copy" onclick="myFunction()">Copy!</button>
+                    </div>
+                    </div>
+                </div>                
+            </div>
+        </div>
+    </div>
+</div>

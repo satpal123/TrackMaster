@@ -67,10 +67,11 @@ namespace TrackMaster
                     }
                 };
                 browserWindowOptions.Center = true;
-                browserWindowOptions.Height = 800;
-                browserWindowOptions.Width = 1400;     
-                browserWindowOptions.AutoHideMenuBar = true;
+                browserWindowOptions.Height = 750;
+                browserWindowOptions.Width = 1000;     
+                //browserWindowOptions.AutoHideMenuBar = true;
                 browserWindowOptions.Resizable = false;
+                browserWindowOptions.HasShadow = true;  
                 
                 await Electron.WindowManager.CreateWindowAsync(browserWindowOptions);
             });

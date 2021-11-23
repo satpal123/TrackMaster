@@ -66,3 +66,8 @@ connection.on("DeviceAndTwitchStatus", function (_id, message) {
             break;
     }
 });
+
+connection.on("NowPlaying", function (artist, track) {
+    $('#artist').text(artist);
+    $('#track').text(track);
+});

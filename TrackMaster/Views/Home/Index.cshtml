@@ -12,11 +12,11 @@
             $("#loading").show();
             $("#playerinfo").hide();
         }
-
+        $('#sidebar').find('a[href="' + location.pathname + '"]').closest('li').addClass('active')
     </script>
 }
 <div class="row">
-    <div class="col-md-7">
+    <div class="col-md-12">
         <div id="playerinfo">
             @await Html.PartialAsync("/Views/Shared/_PlayerOneInfo.cshtml")
             <br />
@@ -26,8 +26,7 @@
             <center><img src="~/Images/ajax-loader.gif" />  Searching for controller...please wait!</center>
         </div>
     </div>
-    <br />
-    <div class="col-md-5">
-        @await Html.PartialAsync("/Views/Shared/_DeviceNetworkInformation.cshtml")
-    </div>
+        
 </div>
+<br />
+@await Html.PartialAsync("/Views/Shared/_DeviceNetworkInformation.cshtml")

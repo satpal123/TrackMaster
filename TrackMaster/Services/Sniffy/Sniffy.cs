@@ -311,6 +311,7 @@ namespace TrackMaster.Services.Sniffy
                         : tracktitle1 != null & trackartist1 == null ? tracktitle1.Remove(tracktitle1.Length - 1) : "ID - ID";
 
                     //_tracklisthubContext.Clients.All.SendAsync("PlayerOne", 5, trackpath);
+                    _tracklisthubContext.Clients.All.SendAsync("NowPlaying", trackartist1, tracktitle1);
                 }
             }
         }
@@ -329,7 +330,8 @@ namespace TrackMaster.Services.Sniffy
                     ? trackartist2.Remove(trackartist2.Length - 1) + " - " + tracktitle2.Remove(tracktitle2.Length - 1)
                     : tracktitle2 != null & trackartist2 == null ? tracktitle2.Remove(tracktitle2.Length - 1) : "ID - ID";
 
-                   // _tracklisthubContext.Clients.All.SendAsync("PlayerTwo", 5, trackpath2);
+                    // _tracklisthubContext.Clients.All.SendAsync("PlayerTwo", 5, trackpath2);
+                    _tracklisthubContext.Clients.All.SendAsync("NowPlaying", trackartist2, tracktitle2);
                 }
             }
         }
@@ -449,6 +451,7 @@ namespace TrackMaster.Services.Sniffy
                             _tracklisthubContext.Clients.All.SendAsync("PlayerOne", 3, globalplayermaster1);
                             _tracklisthubContext.Clients.All.SendAsync("PlayerOne", 4, globalplayerfader1);
                             _tracklisthubContext.Clients.All.SendAsync("PlayerOne", 5, trackpath);
+                            
                         }
                         if (playernumber == 12)
                         {
@@ -463,6 +466,7 @@ namespace TrackMaster.Services.Sniffy
                             _tracklisthubContext.Clients.All.SendAsync("PlayerTwo", 3, globalplayermaster2);
                             _tracklisthubContext.Clients.All.SendAsync("PlayerTwo", 4, globalplayerfader2);
                             _tracklisthubContext.Clients.All.SendAsync("PlayerTwo", 5, trackpath2);
+                            
                         }
                     }
                 }                

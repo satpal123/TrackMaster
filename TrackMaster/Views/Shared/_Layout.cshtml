@@ -6,6 +6,7 @@
     <title>@ViewData["Title"] - TrackMaster</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" />
+     <link rel="stylesheet" href="~/css/simple-sidebar.css" />
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
@@ -15,7 +16,54 @@
     <script src="~/js/trackist.js"></script>
 </head>
 <body>
-    <header>
+        <div class="wrapper">
+
+        <!-- Sidebar -->
+        <nav id="sidebar">
+            <!-- Sidebar Header -->
+            <div class="sidebar-header">
+                <h5>Menu</h5>
+            </div>
+
+            <ul class="list-unstyled components">
+
+                <li id="home">
+                    <a asp-area="" asp-controller="Home" asp-action="Index">Home</a>
+                </li>
+                <li id="settings">
+                    <a asp-area="" asp-controller="Settings" asp-action="Index">Settings</a>
+                </li>
+                <li id="overlay">
+                    <a asp-area="" asp-controller="Overlay" asp-action="Index">Overlay</a>
+                </li>               
+            </ul>
+        </nav>
+
+        <!-- Page Content -->
+        <div id="content">
+            <header>
+                <nav class="navbar navbar-expand-lg navbar-light bg-light">
+                    <div class="container-fluid" style="justify-content:flex-start">
+                        <button type="button" id="sidebarCollapse" class="navbar-btn">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                        </button>
+                        <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">Track Master</a>                    
+                    </div>
+                </nav>
+            </header>
+
+
+            <div class="container-fluid">
+                <main role="main" class="pb-3">
+                    @RenderBody()
+                </main>
+            </div>
+        </div>
+
+    </div>
+  @*  <header>
         <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
             <div class="container-fluid">
                 <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">TrackMaster</a>
@@ -31,18 +79,33 @@
                         <li class="nav-item">
                             <a class="nav-link text-dark" asp-area="" asp-controller="Settings" asp-action="Index">Settings</a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-area="" asp-controller="Overlay" asp-action="Index">Overlay</a>
+                        </li>
                     </ul>
                 </div>
             </div>
         </nav>
-    </header>
-    <div class="container-fluid">
+    </header>*@
+  @*  <div class="container-fluid">
         <main role="main" class="pb-3">
             @RenderBody()
         </main>
-    </div>
+    </div>*@
 
     @await Html.PartialAsync("/Views/Shared/_Toast.cshtml")
+
+       <!-- Menu Toggle Script -->
+    <script>
+
+        $(document).ready(function () {
+            $('#sidebarCollapse').on('click', function () {
+                $('#sidebar').toggleClass('active');
+                $(this).toggleClass('active');
+            });       
+            
+        });
+    </script>
     @RenderSection("Scripts", required: false)
 </body>
 </html>
