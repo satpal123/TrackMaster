@@ -16,7 +16,9 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using TrackMaster.Helper;
 using TrackMaster.Hubs;
+using TrackMaster.Models;
 
 namespace TrackMaster.Services.Sniffy
 {
@@ -59,6 +61,10 @@ namespace TrackMaster.Services.Sniffy
 
         private const string DJ_LINK_PACKET = "5173707431576D4A4F4C";
         private const string MAGIC_NUMBER = "11872349AE";
+
+        private Timer _timer;
+
+        private static List<string> getTrackMetadataSeq =new List<string>();
         #endregion
         public Sniffy(IConfiguration configuration, IHubContext<TrackistHub> synchub, ILogger<Sniffy> logger)
         {
@@ -80,6 +86,7 @@ namespace TrackMaster.Services.Sniffy
                         await CapturePacketsInitialAsync();
 
                     }
+                    _timer = new Timer(DoWork, null, TimeSpan.Zero, TimeSpan.FromSeconds(1));
                     await CapturePacketsAsync();                    
                 }
                 catch (Exception ex)
@@ -88,6 +95,13 @@ namespace TrackMaster.Services.Sniffy
                 }
             }
             Console.WriteLine($"StatusCheckerService background task is stopping.");
+        }
+
+        private void DoWork(object state)
+        {
+            OverlayChangeObserver overlayObserver = new OverlayChangeObserver();
+            overlayObserver.MixStatusChanged += MixStatusChanged;
+            overlayObserver.Start();
         }
         private async Task CapturePacketsInitialAsync()
         {
@@ -254,7 +268,7 @@ namespace TrackMaster.Services.Sniffy
 
                     if (result.Contains(MAGIC_NUMBER))
                     {
-                        GetPlayerNumberAndRekordBoxId(magicnumberPacket, result);
+                        GetPlayerNumberAndRekordBoxId(magicnumberPacket, result); 
                         Players(result);
                     }
                 }              
@@ -265,19 +279,46 @@ namespace TrackMaster.Services.Sniffy
                 Console.WriteLine(ex.Message);
             }            
         }
+        
         private void Players(string result)
         {
-            if (result.Contains("1041010F0C140000000C060606020602060606060606"))
+            if (result.StartsWith(MAGIC_NUMBER) & result[20..].StartsWith("1041010F0C140000000C060606020602060606060606") 
+                    & result.Contains("1041010F0C140000000C060606020602060606060606") & result.Contains("1042010F001400000000"))
             {
-                Player1(result);
-                Player2(result);
+                getTrackMetadataSeq.Add(result);
+            }
+
+            if (result.StartsWith(MAGIC_NUMBER) & result[20..].StartsWith("1041010F0C140000000C060606020602060606060606") 
+                & result.Contains("1041010F0C140000000C060606020602060606060606") & !result.Contains("1042010F001400000000"))
+            {
+                getTrackMetadataSeq.Add(result);
+            }
+
+            if (!result.StartsWith(MAGIC_NUMBER) & result.Contains("1042010F0014"))
+            {
+                var t1 = getTrackMetadataSeq.LastOrDefault(result);
+
+                getTrackMetadataSeq.RemoveAt(getTrackMetadataSeq.Count - 1);
+
+                getTrackMetadataSeq.Add(t1 + result);
+            }          
+
+            if (getTrackMetadataSeq.Count > 3)
+            {
+                foreach(var x in getTrackMetadataSeq)
+                {
+                    Player1(x);
+                    Player2(x);
+                    
+                }
+                getTrackMetadataSeq.Clear();
             }
         }
 
         private void GetPlayerNumberAndRekordBoxId(byte[] magicnumberPacket, string result)
         {
             if (result.Contains("1021020F02140000000C060600000000000000000000"))
-            {
+            {   
                 int mp_len = magicnumberPacket.Length;
 
                 playernumber = Convert.ToInt32(BitConverter.ToString(magicnumberPacket[(mp_len - 9)..(mp_len - 8)]), 16);
@@ -300,7 +341,7 @@ namespace TrackMaster.Services.Sniffy
         {
             countrbidoccurance1 = globalrekordboxid1 != null ? Regex.Matches(result, globalrekordboxid1).Count : 0;
 
-            if (countrbidoccurance1 >= 3)
+            if (countrbidoccurance1 >= 2)
             {
                 (tracktitle1, trackartist1, albumartid1) = GetTrackMetaData(result);
 
@@ -309,9 +350,10 @@ namespace TrackMaster.Services.Sniffy
                     trackpath = tracktitle1 != null & trackartist1 != null
                         ? trackartist1.Remove(trackartist1.Length - 1) + " - " + tracktitle1.Remove(tracktitle1.Length - 1)
                         : tracktitle1 != null & trackartist1 == null ? tracktitle1.Remove(tracktitle1.Length - 1) : "ID - ID";
-
-                    //_tracklisthubContext.Clients.All.SendAsync("PlayerOne", 5, trackpath);
-                    _tracklisthubContext.Clients.All.SendAsync("NowPlaying", trackartist1, tracktitle1);
+                }
+                if (albumartid1 != null)
+                {
+                    //TODO
                 }
             }
         }
@@ -320,7 +362,7 @@ namespace TrackMaster.Services.Sniffy
         {
             countrbidoccurance2 = globalrekordboxid2 != null ? Regex.Matches(result, globalrekordboxid2).Count : 0;
 
-            if (countrbidoccurance2 >= 3)
+            if (countrbidoccurance2 >= 2)
             {
                 (tracktitle2, trackartist2, albumartid2) = GetTrackMetaData(result);
 
@@ -329,26 +371,44 @@ namespace TrackMaster.Services.Sniffy
                     trackpath2 = tracktitle2 != null & trackartist2 != null
                     ? trackartist2.Remove(trackartist2.Length - 1) + " - " + tracktitle2.Remove(tracktitle2.Length - 1)
                     : tracktitle2 != null & trackartist2 == null ? tracktitle2.Remove(tracktitle2.Length - 1) : "ID - ID";
-
-                    // _tracklisthubContext.Clients.All.SendAsync("PlayerTwo", 5, trackpath2);
-                    _tracklisthubContext.Clients.All.SendAsync("NowPlaying", trackartist2, tracktitle2);
+                }
+                if (albumartid2 !=null)
+                {
+                    //TODO
                 }
             }
         }
         private Tuple<string, string, string> GetTrackMetaData(string result)
         {
-            string[] metadataPacket = result.Split(MAGIC_NUMBER);
-            if (metadataPacket[1].Contains("1041010F0C14") & metadataPacket.Length >= 13)
+            string[] metadataPacket = result.Split(MAGIC_NUMBER + result[10..64]);
+            if (metadataPacket.Length >= 13)
             {
-                string title = metadataPacket[1].Split("11000000")[2];
-                string artist = metadataPacket[2].Split("11000000")[2];
+                TrackMetaDataModel trackMetaDataModel = new()
+                {                   
+                    MainID = metadataPacket[1][12..20],
+                    TrackTitle = metadataPacket[1][40..(40 + Convert.ToInt32(metadataPacket[1][22..30], 16) * 2)],
+                    ArtistName = metadataPacket[2][40..(40 + Convert.ToInt32(metadataPacket[2][22..30], 16) * 2)]
+                };
+
+                string title = trackMetaDataModel.TrackTitle;
+                string artist = trackMetaDataModel.ArtistName;
                 string albumartid = null;
 
-                title = title.Length != 2 ? HextoString(title[14..]).Replace("\0", string.Empty).Trim() : null;
-                artist = artist.Length != 2 ? HextoString(artist[14..]).Replace("\0", string.Empty).Trim() : null;
+                title = title.Length != 2 ? HextoString(title).Trim() : null;
+                artist = artist.Length != 2 ? HextoString(artist).Trim() : null;
                 albumartid = null;
 
                 return new Tuple<string, string, string>(title, artist, albumartid);
+            }
+            if (metadataPacket.Length == 8)
+            {
+                TrackMetaDataModel trackMetaDataModel = new()
+                {
+                    FileNamePath = metadataPacket[5][40..(36 + Convert.ToInt32(metadataPacket[5][22..30], 16) * 2)]
+                };
+
+                string albumart = TrackMetadataDetails.GetTrackMetaData(HextoString(trackMetaDataModel.FileNamePath));
+                return new Tuple<string, string, string>(null, null, albumart);
             }
             return new Tuple<string, string, string>(null, null, null);
         }
@@ -498,7 +558,19 @@ namespace TrackMaster.Services.Sniffy
                              .Where(x => x % 2 == 0)
                              .Select(x => Convert.ToByte(InputText.Substring(x, 2), 16))
                              .ToArray();
-            return Encoding.Unicode.GetString(bb);
+            return Encoding.BigEndianUnicode.GetString(bb);
+        }
+
+        public void MixStatusChanged(object sender, OverlayChangeObserver.MixStatusChangedEventArgs e)
+        {
+            if (e.Player1)
+            {
+                _tracklisthubContext.Clients.All.SendAsync("NowPlaying", trackartist1, tracktitle1);
+            }
+            if (e.Player2)
+            {
+                _tracklisthubContext.Clients.All.SendAsync("NowPlaying", trackartist2, tracktitle2);
+            }
         }
     }
 }
