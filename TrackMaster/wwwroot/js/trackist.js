@@ -2,7 +2,7 @@
 //var _twitchstatus = '';
 //var _ethernetstatus = '';
 
-var connection = new signalR.HubConnectionBuilder().withUrl("/trackistHub").build();
+var connection = new signalR.HubConnectionBuilder().withUrl("/trackistHub").withAutomaticReconnect().build();
 
 connection.start().then(function () {}
 ).catch(function (err) {
@@ -24,7 +24,58 @@ connection.on("PlayerOne", function (_id, message) {
             $('#fader-player-one').text(message);
             break;
         case 5:
-            $('#trackmeta-player-one').text(message);
+            if (localStorage.getItem("trackname-player-one") == null || localStorage.getItem("trackname-player-one") != message) {
+                localStorage.setItem("trackname-player-one", message);
+                $('#trackname-player-one').text(message);
+            }
+            else {
+                $('#trackname-player-one').text(localStorage.getItem("trackname-player-one"));
+            }            
+            break;
+        case 6:
+            if (localStorage.getItem("artistname-player-one") == null || localStorage.getItem("artistname-player-one") != message) {
+                localStorage.setItem("artistname-player-one", message);
+                $('#artistname-player-one').text(message);
+            }
+            else {
+                $('#artistname-player-one').text(localStorage.getItem("artistname-player-one"));
+            }
+            break;
+        case 7:
+            if (localStorage.getItem("artwork-player-one") == null || localStorage.getItem("artwork-player-one") != message) {
+                localStorage.setItem("artwork-player-one", message);
+                $('#artwork-player-one').attr("src", message);
+            }
+            else {
+                $('#artwork-player-one').attr("src",localStorage.getItem("artwork-player-one"));
+            }
+            break;
+        case 8:
+            if (localStorage.getItem("duration-player-one") == null || localStorage.getItem("duration-player-one") != message) {
+                localStorage.setItem("duration-player-one", message);
+                $('#duration-player-one').text(message);
+            }
+            else {
+                $('#duration-player-one').text(localStorage.getItem("duration-player-one"));
+            }
+            break;
+        case 9:
+            if (localStorage.getItem("key-player-one") == null || localStorage.getItem("key-player-one") != message) {
+                localStorage.setItem("key-player-one", message);
+                $('#key-player-one').text(message);
+            }
+            else {
+                $('#key-player-one').text(localStorage.getItem("key-player-one"));
+            }
+            break;
+        case 10:
+            if (localStorage.getItem("genre-player-one") == null || localStorage.getItem("genre-player-one") != message) {
+                localStorage.setItem("genre-player-one", message);
+                $('#genre-player-one').text(message);
+            }
+            else {
+                $('#genre-player-one').text(localStorage.getItem("genre-player-one"));
+            }
             break;
     }   
 });
@@ -44,7 +95,58 @@ connection.on("PlayerTwo", function (_id, message) {
             $('#fader-player-two').text(message);
             break;
         case 5:
-            $('#trackmeta-player-two').text(message);
+            if (localStorage.getItem("trackname-player-two") == null || localStorage.getItem("trackname-player-two") != message) {
+                localStorage.setItem("trackname-player-two", message);
+                $('#trackname-player-two').text(message);
+            }
+            else {
+                $('#trackname-player-two').text(localStorage.getItem("trackname-player-two"));
+            }
+            break;
+        case 6:
+            if (localStorage.getItem("artistname-player-two") == null || localStorage.getItem("artistname-player-two") != message) {
+                localStorage.setItem("artistname-player-two", message);
+                $('#artistname-player-two').text(message);
+            }
+            else {
+                $('#artistname-player-two').text(localStorage.getItem("artistname-player-two"));
+            }
+            break;
+        case 7:
+            if (localStorage.getItem("artwork-player-two") == null || localStorage.getItem("artwork-player-two") != message) {
+                localStorage.setItem("artwork-player-two", message);
+                $('#artwork-player-two').attr("src", message);
+            }
+            else {
+                $('#artwork-player-two').attr("src",localStorage.getItem("artwork-player-two"));
+            }
+            break;
+        case 8:
+            if (localStorage.getItem("duration-player-two") == null || localStorage.getItem("duration-player-two") != message) {
+                localStorage.setItem("duration-player-two", message);
+                $('#duration-player-two').text(message);
+            }
+            else {
+                $('#duration-player-two').text(localStorage.getItem("duration-player-two"));
+            }
+            break;
+        case 9:
+            if (localStorage.getItem("key-player-two") == null || localStorage.getItem("key-player-two") != message) {
+                localStorage.setItem("key-player-two", message);
+                $('#key-player-two').text(message);
+            }
+            else {
+                $('#key-player-two').text(localStorage.getItem("key-player-two"));
+            }
+            break;
+        case 10:
+            if (localStorage.getItem("genre-player-two") == null || localStorage.getItem("genre-player-two") != message) {
+                localStorage.setItem("genre-player-two", message);
+                $('#genre-player-two').text(message);
+            }
+            else {
+                $('#genre-player-two').text(localStorage.getItem("genre-player-two"));
+            }
             break;
     }   
 });
@@ -68,6 +170,71 @@ connection.on("DeviceAndTwitchStatus", function (_id, message) {
 });
 
 connection.on("NowPlaying", function (artist, track) {
-    $('#artist').text(artist);
-    $('#track').text(track);
+    if (localStorage.getItem("nowplaying_artist") == null || (localStorage.getItem("nowplaying_artist") != artist)) {
+        localStorage.setItem("nowplaying_artist", artist);
+        $('#artist').text(artist);
+    }
+    else {
+        $('#artist').text(localStorage.getItem("nowplaying_artist"));
+    }
+    if (localStorage.getItem("nowplaying_track") == null || (localStorage.getItem("nowplaying_track") != track)) {
+        localStorage.setItem("nowplaying_track", track);
+        $('#track').text(track);
+    }
+    else {
+        $('#track').text(localStorage.getItem("nowplaying_track"));
+    }
 });
+
+function Nowplaying()
+{
+    if (localStorage.getItem("nowplaying_artist") != null) {
+        console.log(localStorage.getItem("nowplaying_artist"));
+        $('#artist').text(localStorage.getItem("nowplaying_artist"));
+    }
+    if (localStorage.getItem("nowplaying_track") != null) {
+        $('#track').text(localStorage.getItem("nowplaying_track"));
+    }
+}
+
+function PlayerOneRestoreMetadata() {
+    if (localStorage.getItem("trackname-player-one") != null) {
+        $('#trackname-player-one').text(localStorage.getItem("trackname-player-one"));
+    }
+    if (localStorage.getItem("artistname-player-one") != null) {
+        $('#artistname-player-one').text(localStorage.getItem("artistname-player-one"));
+    }
+    if (localStorage.getItem("artwork-player-one") != null) {
+        $('#artwork-player-one').attr("src",localStorage.getItem("artwork-player-one"));
+    }
+    if (localStorage.getItem("duration-player-one") != null) {
+        $('#duration-player-one').text(localStorage.getItem("duration-player-one"));
+    }
+    if (localStorage.getItem("key-player-one") != null) {
+        $('#key-player-one').text(localStorage.getItem("key-player-one"));
+    }
+    if (localStorage.getItem("genre-player-one") != null) {
+        $('#genre-player-one').text(localStorage.getItem("genre-player-one"));
+    }
+}
+
+function PlayerTwoRestoreMetadata() {
+    if (localStorage.getItem("trackname-player-two") != null) {
+        $('#trackname-player-two').text(localStorage.getItem("trackname-player-two"));
+    }
+    if (localStorage.getItem("artistname-player-two") != null) {
+        $('#artistname-player-two').text(localStorage.getItem("artistname-player-two"));
+    }
+    if (localStorage.getItem("artwork-player-two") != null) {
+        $('#artwork-player-two').attr("src",localStorage.getItem("artwork-player-two"));
+    }
+    if (localStorage.getItem("duration-player-two") != null) {
+        $('#duration-player-v').text(localStorage.getItem("duration-player-two"));
+    }
+    if (localStorage.getItem("key-player-two") != null) {
+        $('#key-player-two').text(localStorage.getItem("key-player-two"));
+    }
+    if (localStorage.getItem("genre-player-two") != null) {
+        $('#genre-player-two').text(localStorage.getItem("genre-player-two"));
+    }
+}

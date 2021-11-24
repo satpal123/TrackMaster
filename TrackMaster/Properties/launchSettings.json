@@ -25,7 +25,7 @@
     "TrackMaster": {
       "commandName": "Project",
       "launchBrowser": true,
-      "applicationUrl": "https://localhost:8888",
+      "applicationUrl": "http://localhost:8888",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       }

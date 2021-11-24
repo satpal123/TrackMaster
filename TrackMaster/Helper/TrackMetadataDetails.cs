@@ -5,26 +5,25 @@ namespace TrackMaster.Helper
 {
     public class TrackMetadataDetails
     {
-        public static string GetTrackMetaData(string trackpath)
-        {            
-            var tfile = TagLib.File.Create(trackpath);
+        public static string GetTrackMetaDataFromFile(string trackpath)
+        {
+            string image = null;
 
-            //MemoryStream ms = new MemoryStream(tfile.Tag.Pictures[0].Data.Data);
-            //System.Drawing.Image image = System.Drawing.Image.FromStream(ms);
-
-            var image = Convert.ToBase64String(tfile.Tag.Pictures[0].Data.Data);
-
-            string title = tfile.Tag.Title;
-            string artist = tfile.Tag.FirstPerformer;
-
-            if (artist == null)
+            if (File.Exists(trackpath))
             {
-                return title;
+                var tfile = TagLib.File.Create(trackpath);
+
+                if (tfile.Tag.Pictures.Length != 0)
+                {
+                    image = Convert.ToBase64String(tfile.Tag.Pictures[0].Data.Data);
+                }
+
+                if (image != null)
+                {
+                    return image;
+                }
             }
-            else
-            {
-                return artist + " - " + title;
-            }
+            return null;
         }
     }
 }
