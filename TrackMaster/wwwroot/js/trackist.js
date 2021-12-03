@@ -169,10 +169,10 @@ connection.on("DeviceAndTwitchStatus", function (_id, message) {
     }
 });
 
-connection.on("NowPlaying", function (artist, track) {
+connection.on("NowPlaying", function (artist, track, artwork) {
     if (localStorage.getItem("nowplaying_artist") == null || (localStorage.getItem("nowplaying_artist") != artist)) {
         localStorage.setItem("nowplaying_artist", artist);
-        $('#artist').text(artist);
+        $('#artist').text(artist);        
     }
     else {
         $('#artist').text(localStorage.getItem("nowplaying_artist"));
@@ -184,16 +184,50 @@ connection.on("NowPlaying", function (artist, track) {
     else {
         $('#track').text(localStorage.getItem("nowplaying_track"));
     }
+    if (localStorage.getItem("nowplaying_artwork") == null || (localStorage.getItem("nowplaying_artwork") != artwork)) {
+        localStorage.setItem("nowplaying_artwork", artwork);
+        $('#artwork').attr("src", artwork);
+    }
+    else {
+        $('#artwork').text(localStorage.getItem("nowplaying_artwork"));
+    }
+
+    if ($("#artwork").attr("src") == '/Images/Cover-no-artwork.jpg') {
+        $("#artwork_div").hide();
+    }
+    else {
+        $("#artwork_div").show();
+    }
+    if ($("#artist").text() == "null") {
+        $("#artist").hide();
+    }
+    else {
+        $("#artist").show();
+    }
 });
 
 function Nowplaying()
 {
     if (localStorage.getItem("nowplaying_artist") != null) {
-        console.log(localStorage.getItem("nowplaying_artist"));
         $('#artist').text(localStorage.getItem("nowplaying_artist"));
+        if ($("#artist").text() == "null") {
+            $("#artist").hide();
+        }
+        else {
+            $("#artist").show();
+        }
     }
     if (localStorage.getItem("nowplaying_track") != null) {
         $('#track').text(localStorage.getItem("nowplaying_track"));
+    }
+    if (localStorage.getItem("nowplaying_artwork") != null) {
+        $('#artwork').attr("src", localStorage.getItem("nowplaying_artwork"));
+        if ($("#artwork").attr("src") == '/Images/Cover-no-artwork.jpg') {
+            $("#artwork_div").hide();
+        }
+        else {
+            $("#artwork_div").show();
+        }
     }
 }
 

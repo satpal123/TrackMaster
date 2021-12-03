@@ -19,22 +19,27 @@
      <script>
          func1();
          function func1() {
-                setTimeout(function(){ Nowplaying(); }, 1000);
-                }
+                setTimeout(function(){ Nowplaying();}, 1000);
     </script>
 </head>
 
-<body style="background-color: transparent;">
+<body style="background-color: transparent;">    
     <div class="container mt-3">
         <div class="col-3">
             <h6 id="now-playing" class="text-white overlay-bg-color w-50 text-center">NOW PLAYING</h6>
         </div>
     </div>
     <div class="container">
-        <div class="col-6">
-            <h4 id="artist" class="text-white" style="text-shadow: 2px 2px 2px #000000;"></h4>
-            <h5 id="track" class="text-white mt-n1" style="text-shadow: 2px 2px 2px #000000;"></h5>
+        <div class="row">
+            <div class="col-1" id="artwork_div">
+                <img id="artwork" src="~/Images/Cover-no-artwork.jpg" width=80px height=80px />
+            </div>
+        <div class="col-6">            
+            <h4 id="track" class="text-white mt-n1" style="text-shadow: 2px 2px 2px #000000;"></h4>
+            <h5 id="artist" class="text-white" style="text-shadow: 2px 2px 2px #000000;"></h5>
         </div>
+        </div>
+        
     </div>
 </body>
  </html>

@@ -25,6 +25,8 @@ namespace TrackMaster
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
                     webBuilder.UseElectron(args);
+                    webBuilder.UseKestrel();
+                    webBuilder.UseUrls("http://*:8888");
                     webBuilder.UseStartup<Startup>();
                 })
             .UseSerilog()
