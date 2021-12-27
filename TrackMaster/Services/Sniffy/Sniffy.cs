@@ -602,7 +602,7 @@ namespace TrackMaster.Services.Sniffy
                                             .Where(x => !x.Contains(Constants.MenuFooterReponse)) //Exclude the Footer
                                             .ToArray();
 
-            if (metadataPacket != null & metadataPacket.Length >= 13)
+            if (metadataPacket != null & metadataPacket.Length >= 10)
             {
                 TrackMetaDataModel trackMetaDataModel = new()
                 {
