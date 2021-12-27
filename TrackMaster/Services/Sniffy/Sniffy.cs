@@ -391,15 +391,16 @@ namespace TrackMaster.Services.Sniffy
                 {
                     IPPacket ipPacket = (IPPacket)tcpPacket.ParentPacket;
                     byte[] magicnumberPacket = ipPacket.PayloadPacket.PayloadDataSegment.Bytes.ToArray();
-                    string result = BitConverter.ToString(magicnumberPacket).Replace("-", string.Empty).Substring(108);
-                    IPAddress srcIp = ipPacket.SourceAddress;
-                    
+                    string result = BitConverter.ToString(magicnumberPacket).Replace("-", string.Empty);
+                    IPAddress srcIp = ipPacket.SourceAddress;                    
 
                     if (result.Contains(Constants.MAGIC_NUMBER))
                     {
-                        GetPlayerNumberAndRekordBoxId(magicnumberPacket, result);
+                        var getindexofMagicNumber = result.IndexOf(Constants.MAGIC_NUMBER);
+
+                        GetPlayerNumberAndRekordBoxId(magicnumberPacket, result.Substring(getindexofMagicNumber));
                         //GetTotalMenuItems(result.Substring(108)); Not using this for now
-                        Players(result);
+                        Players(result.Substring(getindexofMagicNumber));
                     }
                 }              
             }
