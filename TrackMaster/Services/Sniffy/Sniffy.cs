@@ -66,6 +66,7 @@ namespace TrackMaster.Services.Sniffy
 
         private Timer _timer;
         private List<int> totallist;
+        public static List<string> trackList = new List<string>();
         #endregion
         public Sniffy(IConfiguration configuration, IHubContext<TrackistHub> synchub, ILogger<Sniffy> logger)
         {
@@ -710,11 +711,20 @@ namespace TrackMaster.Services.Sniffy
             if (e.Player1)
             {
                 _tracklisthubContext.Clients.All.SendAsync("NowPlaying", trackartist1, tracktitle1, albumartid1);
+                TrackHistory(trackartist1 + " - " + tracktitle1);
             }
             if (e.Player2)
             {
                 _tracklisthubContext.Clients.All.SendAsync("NowPlaying", trackartist2, tracktitle2, albumartid2);
-            }
+                TrackHistory(trackartist2 + " - " + tracktitle2);
+            } 
+        }
+
+        public List<string> TrackHistory(string trackMetadata)
+        {
+            trackList.Add(trackMetadata);  
+            
+            return trackList;
         }
     }
 }

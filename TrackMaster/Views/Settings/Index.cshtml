@@ -43,6 +43,8 @@
                         @Html.PasswordFor(p => Model.Password, new { @Id = "Password", @class = "form-control", @placeholder = "Enter OAuth password" })
                         @Html.ValidationMessageFor(p => Model.Password, "", new { @class = "text-danger" })
                         <small id="inputPasswordHelp" class="form-text text-muted">Enter the password as oauth:--string--</small>
+                        <a href="https://twitchapps.com/tmi/" target="_blank">Click here to generate your Twitch OAuth Token</a>
+
                     </div>
                     <div class="form-group">
                         @Html.LabelFor(p => Model.Channel)

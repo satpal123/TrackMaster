@@ -91,6 +91,5 @@ namespace TrackMaster.Helper
             public bool Player1;
             public bool Player2;
         }
-    }
-   
+    }   
 }

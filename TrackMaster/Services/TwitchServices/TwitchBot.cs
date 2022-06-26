@@ -124,6 +124,9 @@ namespace TrackMaster.Services.TwitchServices
 
             if (e.ChatMessage.Message == "!tr")
                 client.SendMessage(e.ChatMessage.Channel, mixStatus.Mixstatus());
+
+            if (e.ChatMessage.Message == "!last3tr")
+                client.SendMessage(e.ChatMessage.Channel, mixStatus.TrackHistory());
         }
 
         private static async Task<Root> GetSetTwitchCredentials()
@@ -138,7 +141,7 @@ namespace TrackMaster.Services.TwitchServices
             }
             else
             {
-                appfullpath = @"C:\Users\satpal\AppData\Roaming\Electron\Settings.json";
+                appfullpath = @"C:\Users\satpa\AppData\Roaming\Electron\Settings.json";
                 return settingsHelper.GetTwitchCredentials(appfullpath);
             }
         }
