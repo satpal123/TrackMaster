@@ -33,7 +33,7 @@ namespace TrackMaster.Helper
                 {
                     elapsedTime_Player1++;
 
-                    if (elapsedTime_Player1 == 10)
+                    if (elapsedTime_Player1 == 30)
                     {   
                         Player1 = true;
                         _Player1 = true;
@@ -54,7 +54,7 @@ namespace TrackMaster.Helper
                 {
                     elapsedTime_Player2++;
 
-                    if (elapsedTime_Player2 == 10)
+                    if (elapsedTime_Player2 == 30)
                     {
                         Player2 = true;
                         _Player2 = true;
