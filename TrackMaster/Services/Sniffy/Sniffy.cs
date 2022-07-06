@@ -711,12 +711,12 @@ namespace TrackMaster.Services.Sniffy
             if (e.Player1)
             {
                 _tracklisthubContext.Clients.All.SendAsync("NowPlaying", trackartist1, tracktitle1, albumartid1);
-                TrackHistory(trackartist1 + " - " + tracktitle1);
+                TrackHistory(trackpath);
             }
             if (e.Player2)
             {
                 _tracklisthubContext.Clients.All.SendAsync("NowPlaying", trackartist2, tracktitle2, albumartid2);
-                TrackHistory(trackartist2 + " - " + tracktitle2);
+                TrackHistory(trackpath2);
             } 
         }
 

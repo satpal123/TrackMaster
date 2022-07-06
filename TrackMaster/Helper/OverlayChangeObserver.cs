@@ -32,9 +32,8 @@ namespace TrackMaster.Helper
                 if (Sniffy.globalplayernumber1 == 11 & Sniffy.globalplayerfader1 == "Fader open" & Sniffy.globalplayerstatus1 == "Player is playing normally" & _Player1 == false)
                 {
                     elapsedTime_Player1++;
-                    Console.WriteLine("Player 1 : " + elapsedTime_Player1);
 
-                    if (elapsedTime_Player1 == 30)
+                    if (elapsedTime_Player1 == 10)
                     {   
                         Player1 = true;
                         _Player1 = true;
@@ -54,9 +53,8 @@ namespace TrackMaster.Helper
                 if (Sniffy.globalplayernumber2 == 12 & Sniffy.globalplayerfader2 == "Fader open" & Sniffy.globalplayerstatus2 == "Player is playing normally" & _Player2 == false)
                 {
                     elapsedTime_Player2++;
-                    Console.WriteLine("Player 2 : " + elapsedTime_Player2);
 
-                    if (elapsedTime_Player2 == 30)
+                    if (elapsedTime_Player2 == 10)
                     {
                         Player2 = true;
                         _Player2 = true;
