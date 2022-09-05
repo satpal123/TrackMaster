@@ -66,7 +66,7 @@ namespace TrackMaster.Services.Sniffy
 
         private Timer _timer;
         private List<int> totallist;
-        public static List<string> trackList = new List<string>();
+        public static List<string> trackList = new();
         #endregion
         public Sniffy(IConfiguration configuration, IHubContext<TrackistHub> synchub, ILogger<Sniffy> logger)
         {
@@ -720,10 +720,25 @@ namespace TrackMaster.Services.Sniffy
             } 
         }
 
-        public List<string> TrackHistory(string trackMetadata)
+        private static List<string> TrackHistory(string trackMetadata)
         {
-            trackList.Add(trackMetadata);  
-            
+            var checkHistoryTrackExists = (from tr in trackList
+                                           where tr.ToString() == trackMetadata
+                                           select tr).ToList();
+
+            if (checkHistoryTrackExists.Count > 0)
+            {
+                int getDuplicateTrackIndex = trackList.IndexOf(checkHistoryTrackExists.FirstOrDefault());
+                trackList.RemoveAt(getDuplicateTrackIndex);
+            }
+
+            if (trackList.Count > 3)
+            {
+                trackList.RemoveAt(0);    
+            }
+
+            trackList.Add(trackMetadata);
+
             return trackList;
         }
     }

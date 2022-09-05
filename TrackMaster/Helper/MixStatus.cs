@@ -9,6 +9,8 @@ namespace TrackMaster.Helper
     {
         private string player1;
         private string player2;
+        private string player1_history;
+        private string player2_history;
         private string tracksplaying;
         private string returnTrackHistory;
 
@@ -46,22 +48,25 @@ namespace TrackMaster.Helper
         }
 
         public string TrackHistory()
-        {            
+        {
+            player1_history = Sniffy.trackpath;
+            player2_history = Sniffy.trackpath2;
+
             //Player 1
             if (Sniffy.globalplayernumber1 == 11 & Sniffy.globalplayerfader1 != "Fader open" & Sniffy.globalplayerstatus1 != "Player is playing normally")
             {
-                Sniffy.trackpath = null;
+                player1_history = null;
             }
 
             //Player 2
             if (Sniffy.globalplayernumber2 == 12 & Sniffy.globalplayerfader2 != "Fader open" & Sniffy.globalplayerstatus2 != "Player is playing normally")
             {
-                Sniffy.trackpath2 = null;
+                player2_history = null;
             }
 
             var trackListHistory = (from tr in Sniffy.trackList
-                                   where tr.ToString() != Sniffy.trackpath & tr.ToString() != Sniffy.trackpath2
-                                   select tr).ToList();
+                                   where tr.ToString() != player1_history & tr.ToString() != player2_history
+                                    select tr).Distinct().ToList();
 
             if (trackListHistory.Count > 3)
             {
@@ -75,7 +80,7 @@ namespace TrackMaster.Helper
                 return returnTrackHistory;
             }
 
-            List<string> trackListHistorySeq = new List<string>();
+            List<string> trackListHistorySeq = new();
             var x = 0;
 
             foreach (var track in trackListHistory)
