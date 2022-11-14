@@ -50,6 +50,7 @@ namespace TrackMaster.Services.Sniffy
         
         private readonly ILogger _logger;               
         private List<int> totallist;
+        private Timer _timer;
         private readonly DataFields _dataFields;
 
         #endregion
@@ -72,10 +73,9 @@ namespace TrackMaster.Services.Sniffy
                     if (_dataFields.ControllerFound == false)
                     {
                         await CapturePacketsInitialAsync();
-
                     }
 
-                    Timer _timer = new(DoWork, null, TimeSpan.Zero, TimeSpan.FromSeconds(1));
+                    _timer = new(DoWork, null, TimeSpan.Zero, TimeSpan.FromSeconds(1));
                     await CapturePacketsAsync();                    
                 }
                 catch (Exception ex)

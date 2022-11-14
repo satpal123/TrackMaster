@@ -31,10 +31,10 @@ namespace TrackMaster
         {
             services.AddControllersWithViews();
             services.AddSignalR();
-            services.AddSingleton(Configuration);
-            services.AddSingleton<DataFieldsInstance>();
+            services.AddSingleton(Configuration);            
             services.AddSingleton<IHostedService, Sniffy>();
-            services.AddSingleton<IHostedService, TwitchBot>();            
+            services.AddSingleton<IHostedService, TwitchBot>();
+            services.AddSingleton<DataFieldsInstance>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -73,7 +73,7 @@ namespace TrackMaster
                 };
                 browserWindowOptions.Center = true;
                 browserWindowOptions.Height = 880;
-                browserWindowOptions.Width = 1500;     
+                browserWindowOptions.Width = 1450;     
                 browserWindowOptions.AutoHideMenuBar = true;
                 browserWindowOptions.Resizable = true;
                 browserWindowOptions.HasShadow = true;

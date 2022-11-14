@@ -4,7 +4,7 @@
     <UserSecretsId>ffa0c55e-2a05-43d7-83e5-fc6f0904350b</UserSecretsId>
     <AssemblyVersion></AssemblyVersion>
     <FileVersion></FileVersion>
-	<Version>3.0.8-Beta</Version>
+	<Version>3.0.9-Beta</Version>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="ElectronNET.API" Version="13.5.1" />

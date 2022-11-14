@@ -39,3 +39,8 @@
 2022-11-14 18:47:59.871 +11:00 [Error] Twitch Bot connection retry
 2022-11-14 18:55:43.395 +11:00 [Error] Twitch Bot connection retry
 2022-11-14 18:58:51.449 +11:00 [Error] Twitch Bot connection retry
+2022-11-14 22:15:22.925 +11:00 [Error] Twitch Bot connection retry
+2022-11-14 22:25:58.636 +11:00 [Error] Twitch Bot connection retry
+2022-11-14 22:29:48.582 +11:00 [Error] Twitch Bot connection retry
+2022-11-14 22:30:51.563 +11:00 [Error] Twitch Bot connection retry
+2022-11-14 22:35:49.996 +11:00 [Error] Twitch Bot connection retry

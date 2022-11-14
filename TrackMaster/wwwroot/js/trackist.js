@@ -261,9 +261,9 @@ function PlayerTwoRestoreMetadata() {
     }
     if (localStorage.getItem("artwork-player-two") != null) {
         $('#artwork-player-two').attr("src",localStorage.getItem("artwork-player-two"));
-    }
+    }   
     if (localStorage.getItem("duration-player-two") != null) {
-        $('#duration-player-v').text(localStorage.getItem("duration-player-two"));
+        $('#duration-player-two').text(localStorage.getItem("duration-player-two"));
     }
     if (localStorage.getItem("key-player-two") != null) {
         $('#key-player-two').text(localStorage.getItem("key-player-two"));
