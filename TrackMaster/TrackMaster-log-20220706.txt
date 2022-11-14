@@ -1,2 +1,0 @@
-2022-07-06 11:53:22.285 +10:00 [Error] Twitch Bot connection retry
-2022-07-06 11:55:16.650 +10:00 [Error] Twitch Bot connection retry
