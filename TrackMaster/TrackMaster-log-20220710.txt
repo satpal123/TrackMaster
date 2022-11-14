@@ -1,0 +1,8 @@
+2022-07-10 00:42:37.312 +10:00 [Error] Twitch Bot connection retry
+2022-07-10 00:55:27.450 +10:00 [Error] Twitch Bot connection retry
+2022-07-10 01:03:44.860 +10:00 [Error] Twitch Bot connection retry
+2022-07-10 01:15:26.648 +10:00 [Error] Twitch Bot connection retry
+2022-07-10 01:28:38.951 +10:00 [Error] Twitch Bot connection retry
+2022-07-10 01:33:42.873 +10:00 [Error] Twitch Bot connection retry
+2022-07-10 01:40:30.040 +10:00 [Error] Twitch Bot connection retry
+2022-07-10 01:48:53.080 +10:00 [Error] Twitch Bot connection retry

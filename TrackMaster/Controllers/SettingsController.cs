@@ -8,11 +8,17 @@ namespace TrackMaster.Controllers
     public class SettingsController : Controller
     {
         private Root root;
+        private readonly DataFields _dataFields;
+
+        public SettingsController(DataFields dataFields)
+        {            
+            _dataFields = dataFields;
+        }
         public IActionResult Index()
         {
-            TwitchCredentialsModel twitchCredentialsModel = new TwitchCredentialsModel();
-            SettingsHelper settingsHelper = new SettingsHelper();
-            root = settingsHelper.GetTwitchCredentials(TwitchBot.appfullpath);
+            TwitchCredentialsModel twitchCredentialsModel = new();
+            SettingsHelper settingsHelper = new(_dataFields);
+            root = settingsHelper.GetTwitchCredentials(_dataFields.Appfullpath);
 
             ViewBag.TwitchCredentials = root;
 
@@ -32,9 +38,9 @@ namespace TrackMaster.Controllers
         {
             if (ModelState.IsValid)
             {
-                SettingsHelper settingsHelper = new SettingsHelper();
+                SettingsHelper settingsHelper = new(_dataFields);
                 settingsHelper.SetTwitchCredentials(twitchCredentialsModel);
-                TwitchBot.IsConnected = false;
+                _dataFields.IsConnected = false;
             }
 
             return Json(new { title = "Notification", message = "Settings saved!", result = twitchCredentialsModel });

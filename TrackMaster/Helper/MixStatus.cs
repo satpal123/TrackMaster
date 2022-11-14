@@ -13,23 +13,28 @@ namespace TrackMaster.Helper
         private string player2_history;
         private string tracksplaying;
         private string returnTrackHistory;
-
+        private readonly DataFields _dataFields;
+        
+        public MixStatus(DataFields dataFields)
+        {
+            _dataFields = dataFields;
+        }
         public string Mixstatus()
         {
             player1 = "";
             player2 = "";
-            tracksplaying = "No tracks are currently playing! or DJ is playing from USB or Vinyl";
+            tracksplaying = "No tracks are currently playing! or DJ is playing from USB or Vinyl";            
 
             //Player 1
-            if (Sniffy.globalplayernumber1 == 11 & Sniffy.globalplayerfader1 == "Fader open" & Sniffy.globalplayerstatus1 == "Player is playing normally")
+            if (_dataFields.Globalplayernumber1 == 11 & _dataFields.Globalplayerfader1 == "Fader open" & _dataFields.Globalplayerstatus1 == "Player is playing normally")
             {
-                player1 = Sniffy.trackpath;
+                player1 = _dataFields.Trackpath;
             }
 
             //Player 2
-            if (Sniffy.globalplayernumber2 == 12 & Sniffy.globalplayerfader2 == "Fader open" & Sniffy.globalplayerstatus2 == "Player is playing normally")
+            if (_dataFields.Globalplayernumber2 == 12 & _dataFields.Globalplayerfader2 == "Fader open" & _dataFields.Globalplayerstatus2 == "Player is playing normally")
             {
-                player2 = Sniffy.trackpath2;
+                player2 = _dataFields.Trackpath2;
             }
 
             if (player1 != "" & player2 != "")
@@ -49,28 +54,28 @@ namespace TrackMaster.Helper
 
         public string TrackHistory()
         {
-            player1_history = Sniffy.trackpath;
-            player2_history = Sniffy.trackpath2;
+            player1_history = _dataFields.Trackpath;
+            player2_history = _dataFields.Trackpath2;
 
             //Player 1
-            if (Sniffy.globalplayernumber1 == 11 & Sniffy.globalplayerfader1 != "Fader open" & Sniffy.globalplayerstatus1 != "Player is playing normally")
+            if (_dataFields.Globalplayernumber1 == 11 & _dataFields.Globalplayerfader1 != "Fader open" & _dataFields.Globalplayerstatus1 != "Player is playing normally")
             {
                 player1_history = null;
             }
 
             //Player 2
-            if (Sniffy.globalplayernumber2 == 12 & Sniffy.globalplayerfader2 != "Fader open" & Sniffy.globalplayerstatus2 != "Player is playing normally")
+            if (_dataFields.Globalplayernumber2 == 12 & _dataFields.Globalplayerfader2 != "Fader open" & _dataFields.Globalplayerstatus2 != "Player is playing normally")
             {
                 player2_history = null;
             }
 
-            var trackListHistory = (from tr in Sniffy.trackList
+            var trackListHistory = (from tr in _dataFields.TrackList
                                    where tr.ToString() != player1_history & tr.ToString() != player2_history
                                     select tr).Distinct().ToList();
 
             if (trackListHistory.Count > 3)
             {
-                Sniffy.trackList.RemoveAt(0);
+                _dataFields.TrackList.RemoveAt(0);
                 trackListHistory.RemoveAt(0);
             }
 

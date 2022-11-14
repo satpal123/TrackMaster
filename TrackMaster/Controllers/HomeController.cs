@@ -1,23 +1,25 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using System.Diagnostics;
+using TrackMaster.Helper;
 using TrackMaster.Hubs;
 using TrackMaster.Models;
-using TrackMaster.Services.Sniffy;
 
 namespace TrackMaster.Controllers
 {
     public class HomeController : Controller
     {
         private readonly IHubContext<TrackistHub> _tracklisthubContext;
+        private readonly DataFields _dataFields;
 
-        public HomeController(IHubContext<TrackistHub> synchub)
+        public HomeController(IHubContext<TrackistHub> synchub, DataFields dataFields)
         {
             _tracklisthubContext = synchub;
+            _dataFields = dataFields;
         }
         public IActionResult Index()
         {
-            ViewBag.ControllerFound = Sniffy.ControllerFound;
+            ViewBag.ControllerFound = _dataFields.ControllerFound;
 
             return View();
         }

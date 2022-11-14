@@ -6,6 +6,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System.Threading.Tasks;
+using TrackMaster.Helper;
 using TrackMaster.Hubs;
 using TrackMaster.Services.Sniffy;
 using TrackMaster.Services.TwitchServices;
@@ -18,6 +19,10 @@ namespace TrackMaster
         {
             Configuration = configuration;
         }
+        public class DataFieldsInstance
+        {
+            public DataFields dataFields = new(); 
+        }
 
         public IConfiguration Configuration { get; }
 
@@ -27,8 +32,9 @@ namespace TrackMaster
             services.AddControllersWithViews();
             services.AddSignalR();
             services.AddSingleton(Configuration);
+            services.AddSingleton<DataFieldsInstance>();
             services.AddSingleton<IHostedService, Sniffy>();
-            services.AddSingleton<IHostedService, TwitchBot>();
+            services.AddSingleton<IHostedService, TwitchBot>();            
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -57,8 +63,7 @@ namespace TrackMaster
             });
 
             Task.Run(async () =>
-            {               
-
+            {  
                 var browserWindowOptions = new BrowserWindowOptions
                 {
                     WebPreferences = new WebPreferences
@@ -67,15 +72,16 @@ namespace TrackMaster
                     }
                 };
                 browserWindowOptions.Center = true;
-                browserWindowOptions.Height = 750;
-                browserWindowOptions.Width = 1400;     
-                //browserWindowOptions.AutoHideMenuBar = true;
-                //browserWindowOptions.Resizable = false;
-                browserWindowOptions.HasShadow = true;  
-                
-                await Electron.WindowManager.CreateWindowAsync(browserWindowOptions);
-            });
+                browserWindowOptions.Height = 880;
+                browserWindowOptions.Width = 1500;     
+                browserWindowOptions.AutoHideMenuBar = true;
+                browserWindowOptions.Resizable = true;
+                browserWindowOptions.HasShadow = true;
 
+                var browserWindow = await Electron.WindowManager.CreateWindowAsync(browserWindowOptions);
+                browserWindow.Show();
+                browserWindow.Reload();
+            });
         }
     }
 }

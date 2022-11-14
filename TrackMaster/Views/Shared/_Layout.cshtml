@@ -1,4 +1,5 @@
-﻿<!DOCTYPE html>
+﻿@using static TrackMaster.Services.Sniffy.Sniffy
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
@@ -35,10 +36,9 @@
                 </li>
                 <li id="overlay">
                     <a asp-area="" asp-controller="Overlay" asp-action="Index">Overlay</a>
-                </li>               
-            </ul>
+                </li>  
+            </ul>            
         </nav>
-
         <!-- Page Content -->
         <div id="content">
             <header>
@@ -49,7 +49,7 @@
                             <span></span>
                             <span></span>
                         </button>
-                        <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">Track Master</a>                    
+                        <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">Track Master - Build @VersionHelper.GetAssemblyVersion()</a>
                     </div>
                 </nav>
             </header>
@@ -58,7 +58,7 @@
             <div class="container-fluid">
                 <main role="main" class="pb-3">
                     @RenderBody()
-                </main>
+                </main>                
             </div>
         </div>
 
@@ -102,9 +102,8 @@
             $('#sidebarCollapse').on('click', function () {
                 $('#sidebar').toggleClass('active');
                 $(this).toggleClass('active');
-            });       
-            
-        });
+            }); 
+        });        
     </script>
     @RenderSection("Scripts", required: false)
 </body>

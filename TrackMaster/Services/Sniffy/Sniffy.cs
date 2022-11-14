@@ -7,11 +7,11 @@ using SharpPcap;
 using SharpPcap.LibPcap;
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
 using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
+using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -25,54 +25,40 @@ namespace TrackMaster.Services.Sniffy
     public class Sniffy : BackgroundService
     {
         #region Variable declarations
-        public static string appfullpath;
         private readonly IHubContext<TrackistHub> _tracklisthubContext;
 
         private readonly string _ethernetdevice;
         private readonly string _controllerIP;
 
         private static string playerstatus;
-        public static int globalplayernumber1;
-        public static string globalplayerstatus1, globalplayerloadeddevice1, globalplayermaster1, globalplayerfader1;
-        public static int globalplayernumber2;
-        public static string globalplayerstatus2, globalplayerloadeddevice2, globalplayermaster2, globalplayerfader2;
         private static int deviceloadedfrom;
         private static string loadeddevice;
         private static string playermaster;
         private static string globalrekordboxid1, globalrekordboxid2;
         private static int playernumber;
         private static string fadermaster;
-        public static string playername;
 
-        private static Tuple<int, string> deck1, deck2;
-        private static List<string> getTrackMetadataSeq = new List<string>();
+        private static Tuple<int, string> deck1;
+        private static Tuple<int, string> deck2;
+        private static List<string> getTrackMetadataSeq = new();
         private bool trackloaded_player1, trackloaded_player2;
         private bool AlbumArtloaded_player1, AlbumArtloaded_player2;
-        public static string trackpath, trackpath2;
-        public static string tracktitle1, trackartist1;
-        public static string tracktitle2, trackartist2;
-        public static string albumartid1, albumartid2;
-        public static string duration1, duration2;
-        public static string key1, key2;
-        public static string genre1, genre2;
 
         private static List<string> currentpcid;
         private int j = 0;
         private static int countrbidoccurance1, countrbidoccurance2;
         
-        private readonly ILogger _logger;
-        public static bool ControllerFound = false;
-        public static string ControllerIP;
-
-        private Timer _timer;
+        private readonly ILogger _logger;               
         private List<int> totallist;
-        public static List<string> trackList = new();
+        private readonly DataFields _dataFields;
+
         #endregion
-        public Sniffy(IConfiguration configuration, IHubContext<TrackistHub> synchub, ILogger<Sniffy> logger)
+        public Sniffy(IConfiguration configuration, IHubContext<TrackistHub> synchub, ILogger<Sniffy> logger, DataFields dataFields)
         {
             _tracklisthubContext = synchub;
             _ethernetdevice = configuration.GetSection("EthernetDevice").Value;
             _controllerIP = configuration.GetSection("ControllerIP").Value;
+            _dataFields = dataFields;
             _logger = logger;
         }
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -83,12 +69,13 @@ namespace TrackMaster.Services.Sniffy
             {
                 try
                 {
-                    if (ControllerFound == false)
+                    if (_dataFields.ControllerFound == false)
                     {
                         await CapturePacketsInitialAsync();
 
                     }
-                    _timer = new Timer(DoWork, null, TimeSpan.Zero, TimeSpan.FromSeconds(1));
+
+                    Timer _timer = new(DoWork, null, TimeSpan.Zero, TimeSpan.FromSeconds(1));
                     await CapturePacketsAsync();                    
                 }
                 catch (Exception ex)
@@ -100,7 +87,7 @@ namespace TrackMaster.Services.Sniffy
         }
         private void DoWork(object state)
         {
-            OverlayChangeObserver overlayObserver = new OverlayChangeObserver();
+            OverlayChangeObserver overlayObserver = new(_dataFields);
             overlayObserver.MixStatusChanged += MixStatusChanged;
             overlayObserver.Start();
         }
@@ -108,7 +95,7 @@ namespace TrackMaster.Services.Sniffy
         {
             j = await GetConnectedControllerIPAsync();
         }
-        public async Task CapturePacketsAsync()
+        private async Task CapturePacketsAsync()
         {
                 await Task.Run(() =>
                 {
@@ -129,11 +116,11 @@ namespace TrackMaster.Services.Sniffy
 
                     i = int.Parse(j.ToString());
 
-                    var device = devices[i];
+                    using var device = devices[i];
 
                     // Register our handler function to the 'packet arrival' event
-                    device.OnPacketArrival += new PacketArrivalEventHandler(device_OnPacketArrivalUdp);
-                    device.OnPacketArrival += new PacketArrivalEventHandler(device_OnPacketArrivalTcp);
+                    device.OnPacketArrival += new PacketArrivalEventHandler(Device_OnPacketArrivalUdp);
+                    device.OnPacketArrival += new PacketArrivalEventHandler(Device_OnPacketArrivalTcp);
 
                     // Open the device for capturing
                     int readTimeoutMilliseconds = 1500;
@@ -165,7 +152,7 @@ namespace TrackMaster.Services.Sniffy
 
             int i=0;
 
-            while (!ControllerFound)
+            while (!_dataFields.ControllerFound)
             {
                 i = 0;
                 // Print out the devices
@@ -179,7 +166,7 @@ namespace TrackMaster.Services.Sniffy
 
                         await AutoConfigureAsync(i, devices);
 
-                        if (ControllerFound)
+                        if (_dataFields.ControllerFound)
                             break;
 
                         i++;
@@ -190,12 +177,12 @@ namespace TrackMaster.Services.Sniffy
         }
         private async Task AutoConfigureAsync(int i, CaptureDeviceList devices)
         {
-            var device = devices[i];
+            using var device = devices[i];
 
             await _tracklisthubContext.Clients.All.SendAsync("DeviceAndTwitchStatus", 3, "Searching for Device...");
 
             // Register our handler function to the 'packet arrival' event
-            device.OnPacketArrival += new PacketArrivalEventHandler(device_OnPacketArrivalUdpInitial);
+            device.OnPacketArrival += new PacketArrivalEventHandler(Device_OnPacketArrivalUdpInitial);
 
             // Open the device for capturing
             int readTimeoutMilliseconds = 1500;
@@ -214,9 +201,8 @@ namespace TrackMaster.Services.Sniffy
 
             await Task.Delay(6000);
             device.StopCapture();
-            device.Close();
         }
-        private void device_OnPacketArrivalUdpInitial(object sender, PacketCapture e)
+        private void Device_OnPacketArrivalUdpInitial(object sender, PacketCapture e)
         {
             currentpcid = GetLocalIPAddress();
             RawCapture _packet = e.GetPacket();
@@ -243,14 +229,14 @@ namespace TrackMaster.Services.Sniffy
 
                         if (srcIp.ToString() != res)
                         {
-                            ControllerFound = true;
-                            ControllerIP = srcIp.ToString();
+                            _dataFields.ControllerFound = true;
+                            _dataFields.ControllerIP = srcIp.ToString();
                         }
                     }
                 }
             }
         }
-        private void device_OnPacketArrivalUdp(object sender, PacketCapture e)
+        private void Device_OnPacketArrivalUdp(object sender, PacketCapture e)
         {
             RawCapture _packet = e.GetPacket();
             var packet = Packet.ParsePacket(_packet.LinkLayerType, _packet.Data);
@@ -262,20 +248,20 @@ namespace TrackMaster.Services.Sniffy
                 IPAddress srcIp = ipPacket.SourceAddress;
                 int dstPort = udpPacket.DestinationPort;
 
-                if (srcIp.ToString() == ControllerIP)
+                if (srcIp.ToString() == _dataFields.ControllerIP)
                 {
                     var magicnumber = ipPacket.PayloadPacket.PayloadDataSegment.Bytes.Skip(42).ToArray();
 
                     var result = BitConverter.ToString(magicnumber).Replace("-", string.Empty);
 
-                    if (srcIp.ToString() == ControllerIP & dstPort == 50002 & result.StartsWith(Constants.DJ_LINK_PACKET))
+                    if (srcIp.ToString() == _dataFields.ControllerIP & dstPort == 50002 & result.StartsWith(Constants.DJ_LINK_PACKET))
                     {
-                        playername = Encoding.Default.GetString(magicnumber[11..24]).Replace("\0", string.Empty);
+                        _dataFields.Playername = Encoding.Default.GetString(magicnumber[11..24]).Replace("\0", string.Empty);
                         var playernumber = Convert.ToInt32(BitConverter.ToString(magicnumber[33..34]), 16);
 
                         if (result.StartsWith(Constants.DJ_LINK_PACKET + "0A"))
                         {
-                            _tracklisthubContext.Clients.All.SendAsync("DeviceAndTwitchStatus", 1, playername + " (" + ControllerIP + ")");
+                            _tracklisthubContext.Clients.All.SendAsync("DeviceAndTwitchStatus", 1, _dataFields.Playername + " (" + _dataFields.ControllerIP + ")");
 
                             deviceloadedfrom = Convert.ToInt32(BitConverter.ToString(magicnumber[41..42]), 16);
 
@@ -337,49 +323,35 @@ namespace TrackMaster.Services.Sniffy
 
                         if (playernumber == 11)
                         {
-                            globalplayernumber1 = playernumber;
-                            globalplayerstatus1 = playerstatus;
-                            globalplayerloadeddevice1 = loadeddevice;
-                            globalplayermaster1 = playermaster;
-                            globalplayerfader1 = fadermaster;
+                            _dataFields.Globalplayernumber1 = playernumber;
+                            _dataFields.Globalplayerstatus1 = playerstatus;
+                            _dataFields.Globalplayerloadeddevice1 = loadeddevice;
+                            _dataFields.Globalplayermaster1 = playermaster;
+                            _dataFields.Globalplayerfader1 = fadermaster;
 
-                            _tracklisthubContext.Clients.All.SendAsync("PlayerOne", 1, globalplayerstatus1);
-                            _tracklisthubContext.Clients.All.SendAsync("PlayerOne", 2, globalplayerloadeddevice1);
-                            _tracklisthubContext.Clients.All.SendAsync("PlayerOne", 3, globalplayermaster1);
-                            _tracklisthubContext.Clients.All.SendAsync("PlayerOne", 4, globalplayerfader1);
-                            //_tracklisthubContext.Clients.All.SendAsync("PlayerOne", 5, tracktitle1);
-                            //_tracklisthubContext.Clients.All.SendAsync("PlayerOne", 6, trackartist1);
-                            //_tracklisthubContext.Clients.All.SendAsync("PlayerOne", 7, albumartid1);
-                            //_tracklisthubContext.Clients.All.SendAsync("PlayerOne", 8, duration1);
-                            //_tracklisthubContext.Clients.All.SendAsync("PlayerOne", 9, key1);
-                            //_tracklisthubContext.Clients.All.SendAsync("PlayerOne", 10, genre1);
-
+                            _tracklisthubContext.Clients.All.SendAsync("PlayerOne", 1, _dataFields.Globalplayerstatus1);
+                            _tracklisthubContext.Clients.All.SendAsync("PlayerOne", 2, _dataFields.Globalplayerloadeddevice1);
+                            _tracklisthubContext.Clients.All.SendAsync("PlayerOne", 3, _dataFields.Globalplayermaster1);
+                            _tracklisthubContext.Clients.All.SendAsync("PlayerOne", 4, _dataFields.Globalplayerfader1);
                         }
                         if (playernumber == 12)
                         {
-                            globalplayernumber2 = playernumber;
-                            globalplayerstatus2 = playerstatus;
-                            globalplayerloadeddevice2 = loadeddevice;
-                            globalplayermaster2 = playermaster;
-                            globalplayerfader2 = fadermaster;
+                            _dataFields.Globalplayernumber2 = playernumber;
+                            _dataFields.Globalplayerstatus2 = playerstatus;
+                            _dataFields.Globalplayerloadeddevice2 = loadeddevice;
+                            _dataFields.Globalplayermaster2 = playermaster;
+                            _dataFields.Globalplayerfader2 = fadermaster;
 
-                            _tracklisthubContext.Clients.All.SendAsync("PlayerTwo", 1, globalplayerstatus2);
-                            _tracklisthubContext.Clients.All.SendAsync("PlayerTwo", 2, globalplayerloadeddevice2);
-                            _tracklisthubContext.Clients.All.SendAsync("PlayerTwo", 3, globalplayermaster2);
-                            _tracklisthubContext.Clients.All.SendAsync("PlayerTwo", 4, globalplayerfader2);
-                            //_tracklisthubContext.Clients.All.SendAsync("PlayerTwo", 5, tracktitle2);
-                            //_tracklisthubContext.Clients.All.SendAsync("PlayerOne", 6, trackartist2);
-                            //_tracklisthubContext.Clients.All.SendAsync("PlayerOne", 7, albumartid2);
-                            //_tracklisthubContext.Clients.All.SendAsync("PlayerOne", 8, duration2);
-                            //_tracklisthubContext.Clients.All.SendAsync("PlayerOne", 9, key2);
-                            //_tracklisthubContext.Clients.All.SendAsync("PlayerOne", 10, genre2);
-
+                            _tracklisthubContext.Clients.All.SendAsync("PlayerTwo", 1, _dataFields.Globalplayerstatus2);
+                            _tracklisthubContext.Clients.All.SendAsync("PlayerTwo", 2, _dataFields.Globalplayerloadeddevice2);
+                            _tracklisthubContext.Clients.All.SendAsync("PlayerTwo", 3, _dataFields.Globalplayermaster2);
+                            _tracklisthubContext.Clients.All.SendAsync("PlayerTwo", 4, _dataFields.Globalplayerfader2);
                         }
                     }
                 }
             }
         }
-        private void device_OnPacketArrivalTcp(object sender, PacketCapture e)
+        private void Device_OnPacketArrivalTcp(object sender, PacketCapture e)
         {
             try
             {               
@@ -423,7 +395,7 @@ namespace TrackMaster.Services.Sniffy
                 if (playernumber == 11)
                 {
                     globalrekordboxid1 = rbid;
-                    deck1 = Tuple.Create(playernumber, rbid);
+                    //deck1 = Tuple.Create(playernumber, rbid);
                     trackloaded_player1 = false;
                     AlbumArtloaded_player1 = false;
                 }
@@ -431,7 +403,7 @@ namespace TrackMaster.Services.Sniffy
                 if (playernumber == 12)
                 {
                     globalrekordboxid2 = rbid;
-                    deck2 = Tuple.Create(playernumber, rbid);
+                    //deck2 = Tuple.Create(playernumber, rbid);
                     trackloaded_player2 = false;
                     AlbumArtloaded_player2 = false;
                 }
@@ -498,20 +470,20 @@ namespace TrackMaster.Services.Sniffy
                     {
                         if (returnMetaData.TrackTitle != null | returnMetaData.ArtistName != null)
                         {
-                            tracktitle1 = returnMetaData.TrackTitle;
-                            trackartist1 = returnMetaData.ArtistName;
-                            duration1 = returnMetaData.Duration;
-                            key1 = returnMetaData.Key; genre1 = returnMetaData.Genre;
+                            _dataFields.Tracktitle1 = returnMetaData.TrackTitle;
+                            _dataFields.Trackartist1 = returnMetaData.ArtistName;
+                            _dataFields.Duration1 = returnMetaData.Duration;
+                            _dataFields.Key1 = returnMetaData.Key; _dataFields.Genre1 = returnMetaData.Genre;
 
-                            trackpath = tracktitle1 != null & trackartist1 != null
-                                ? trackartist1 + " - " + tracktitle1
-                                : tracktitle1 != null & trackartist1 == null ? tracktitle1 : "ID - ID";
+                            _dataFields.Trackpath = _dataFields.Tracktitle1 != null & _dataFields.Trackartist1 != null
+                                ? _dataFields.Trackartist1 + " - " + _dataFields.Tracktitle1
+                                : _dataFields.Tracktitle1 != null & _dataFields.Trackartist1 == null ? _dataFields.Tracktitle1 : "ID - ID";
 
-                            _tracklisthubContext.Clients.All.SendAsync("PlayerOne", 5, tracktitle1);
-                            _tracklisthubContext.Clients.All.SendAsync("PlayerOne", 6, trackartist1);
-                            _tracklisthubContext.Clients.All.SendAsync("PlayerOne", 8, duration1);
-                            _tracklisthubContext.Clients.All.SendAsync("PlayerOne", 9, key1);
-                            _tracklisthubContext.Clients.All.SendAsync("PlayerOne", 10, genre1);
+                            _tracklisthubContext.Clients.All.SendAsync("PlayerOne", 5, _dataFields.Tracktitle1);
+                            _tracklisthubContext.Clients.All.SendAsync("PlayerOne", 6, _dataFields.Trackartist1);
+                            _tracklisthubContext.Clients.All.SendAsync("PlayerOne", 8, _dataFields.Duration1);
+                            _tracklisthubContext.Clients.All.SendAsync("PlayerOne", 9, _dataFields.Key1);
+                            _tracklisthubContext.Clients.All.SendAsync("PlayerOne", 10, _dataFields.Genre1);
 
                             trackloaded_player1 = true;
                         }
@@ -530,8 +502,8 @@ namespace TrackMaster.Services.Sniffy
                     {
                         if (returnAlbumArtData.AlbumArt != null)
                         {
-                            albumartid1 = returnAlbumArtData.AlbumArt;
-                            _tracklisthubContext.Clients.All.SendAsync("PlayerOne", 7, albumartid1);
+                            _dataFields.Albumartid1 = returnAlbumArtData.AlbumArt;
+                            _tracklisthubContext.Clients.All.SendAsync("PlayerOne", 7, _dataFields.Albumartid1);
 
                             AlbumArtloaded_player1 = true;
                         }
@@ -554,21 +526,21 @@ namespace TrackMaster.Services.Sniffy
                     {
                         if (returnMetaData.TrackTitle != null | returnMetaData.ArtistName != null)
                         {
-                            tracktitle2 = returnMetaData.TrackTitle; ;
-                            trackartist2 = returnMetaData.ArtistName;
-                            duration2 = returnMetaData.Duration;
-                            key2 = returnMetaData.Key;
-                            genre2 = returnMetaData.Genre;
+                            _dataFields.Tracktitle2 = returnMetaData.TrackTitle; ;
+                            _dataFields.Trackartist2 = returnMetaData.ArtistName;
+                            _dataFields.Duration2 = returnMetaData.Duration;
+                            _dataFields.Key2 = returnMetaData.Key;
+                            _dataFields.Genre2 = returnMetaData.Genre;
 
-                            trackpath2 = tracktitle2 != null & trackartist2 != null
-                            ? trackartist2 + " - " + tracktitle2
-                            : tracktitle2 != null & trackartist2 == null ? tracktitle2 : "ID - ID";
+                            _dataFields.Trackpath2 = _dataFields.Tracktitle2 != null & _dataFields.Trackartist2 != null
+                            ? _dataFields.Trackartist2 + " - " + _dataFields.Tracktitle2
+                            : _dataFields.Tracktitle2 != null & _dataFields.Trackartist2 == null ? _dataFields.Tracktitle2 : "ID - ID";
 
-                            _tracklisthubContext.Clients.All.SendAsync("PlayerTwo", 5, tracktitle2);
-                            _tracklisthubContext.Clients.All.SendAsync("PlayerTwo", 6, trackartist2);
-                            _tracklisthubContext.Clients.All.SendAsync("PlayerTwo", 8, duration2);
-                            _tracklisthubContext.Clients.All.SendAsync("PlayerTwo", 9, key2);
-                            _tracklisthubContext.Clients.All.SendAsync("PlayerTwo", 10, genre2);
+                            _tracklisthubContext.Clients.All.SendAsync("PlayerTwo", 5, _dataFields.Tracktitle2);
+                            _tracklisthubContext.Clients.All.SendAsync("PlayerTwo", 6, _dataFields.Trackartist2);
+                            _tracklisthubContext.Clients.All.SendAsync("PlayerTwo", 8, _dataFields.Duration2);
+                            _tracklisthubContext.Clients.All.SendAsync("PlayerTwo", 9, _dataFields.Key2);
+                            _tracklisthubContext.Clients.All.SendAsync("PlayerTwo", 10, _dataFields.Genre2);
 
                             trackloaded_player2 = true;
                         }
@@ -585,8 +557,8 @@ namespace TrackMaster.Services.Sniffy
                     {
                         if (returnAlbumArtData.AlbumArt != null)
                         {
-                            albumartid2 = returnAlbumArtData.AlbumArt;
-                            _tracklisthubContext.Clients.All.SendAsync("PlayerTwo", 7, albumartid2);
+                            _dataFields.Albumartid2 = returnAlbumArtData.AlbumArt;
+                            _tracklisthubContext.Clients.All.SendAsync("PlayerTwo", 7, _dataFields.Albumartid2);
 
                             AlbumArtloaded_player2 = true;
                         }
@@ -679,9 +651,9 @@ namespace TrackMaster.Services.Sniffy
 
             return _trackMetaData;
         }
-        public static List<string> GetLocalIPAddress()
+        private static List<string> GetLocalIPAddress()
         {
-            List<string> GetIP = new List<string>();
+            List<string> GetIP = new();
 
             foreach (NetworkInterface ni in NetworkInterface.GetAllNetworkInterfaces())
             {
@@ -710,36 +682,43 @@ namespace TrackMaster.Services.Sniffy
         {
             if (e.Player1)
             {
-                _tracklisthubContext.Clients.All.SendAsync("NowPlaying", trackartist1, tracktitle1, albumartid1);
-                TrackHistory(trackpath);
+                _tracklisthubContext.Clients.All.SendAsync("NowPlaying", _dataFields.Trackartist1, _dataFields.Tracktitle1, _dataFields.Albumartid1);
+                TrackHistory(_dataFields.Trackpath);
             }
             if (e.Player2)
             {
-                _tracklisthubContext.Clients.All.SendAsync("NowPlaying", trackartist2, tracktitle2, albumartid2);
-                TrackHistory(trackpath2);
+                _tracklisthubContext.Clients.All.SendAsync("NowPlaying", _dataFields.Trackartist2, _dataFields.Tracktitle2, _dataFields.Albumartid2);
+                TrackHistory(_dataFields.Trackpath2);
             } 
         }
-
-        private static List<string> TrackHistory(string trackMetadata)
+        private List<string> TrackHistory(string trackMetadata)
         {
-            var checkHistoryTrackExists = (from tr in trackList
+            var checkHistoryTrackExists = (from tr in _dataFields.TrackList
                                            where tr.ToString() == trackMetadata
                                            select tr).ToList();
 
             if (checkHistoryTrackExists.Count > 0)
             {
-                int getDuplicateTrackIndex = trackList.IndexOf(checkHistoryTrackExists.FirstOrDefault());
-                trackList.RemoveAt(getDuplicateTrackIndex);
+                int getDuplicateTrackIndex = _dataFields.TrackList.IndexOf(checkHistoryTrackExists.FirstOrDefault());
+                _dataFields.TrackList.RemoveAt(getDuplicateTrackIndex);
             }
 
-            if (trackList.Count > 3)
+            if (_dataFields.TrackList.Count > 3)
             {
-                trackList.RemoveAt(0);    
+                _dataFields.TrackList.RemoveAt(0);    
             }
 
-            trackList.Add(trackMetadata);
+            _dataFields.TrackList.Add(trackMetadata);
 
-            return trackList;
+            return _dataFields.TrackList;
+        }
+        public class VersionHelper
+        {
+            public static string GetAssemblyVersion()
+            {
+                AssemblyInformationalVersionAttribute infoVersion = (AssemblyInformationalVersionAttribute)Assembly.GetExecutingAssembly().GetCustomAttributes(typeof(AssemblyInformationalVersionAttribute), false).FirstOrDefault();
+                return infoVersion.InformationalVersion;
+            }
         }
     }
 }

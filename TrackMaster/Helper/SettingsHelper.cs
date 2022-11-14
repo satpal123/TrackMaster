@@ -1,9 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
+﻿using System.IO;
 using System.Text.Json;
-using System.Threading.Tasks;
 using TrackMaster.Models;
 using TrackMaster.Services.TwitchServices;
 
@@ -12,6 +8,12 @@ namespace TrackMaster.Helper
     public class SettingsHelper
     {        
         private string filecontent;
+
+        private readonly DataFields _dataFields;
+        public SettingsHelper(DataFields dataFields)
+        {
+            _dataFields = dataFields;
+        }
 
         public TwitchCredentialsModel SetTwitchCredentials(TwitchCredentialsModel TwitchCredentials)
         {
@@ -31,14 +33,14 @@ namespace TrackMaster.Helper
             };
 
             filecontent = JsonSerializer.Serialize(root, options);
-            File.WriteAllText(TwitchBot.appfullpath, filecontent);
+            File.WriteAllText(_dataFields.Appfullpath, filecontent);
 
             return TwitchCredentials;
         }
 
         public Root GetTwitchCredentials(string settingsPath)
         {
-            Root root = new Root();
+            Root root = new();
 
             var filecheck = File.Exists(settingsPath);
             

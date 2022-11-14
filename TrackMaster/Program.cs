@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Serilog;
+using TrackMaster.Helper;
 using TrackMaster.Services.Sniffy;
 using TrackMaster.Services.TwitchServices;
 
@@ -35,6 +36,7 @@ namespace TrackMaster
                     services.AddHostedService<TwitchBot>(); //Connect to Twitch               
                     //Add more services to connect to here and create a service class under services.
                     services.AddHostedService<Sniffy>();
+                    services.AddSingleton<DataFields>();
                 });
     }
 }

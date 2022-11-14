@@ -2,17 +2,20 @@
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
     <UserSecretsId>ffa0c55e-2a05-43d7-83e5-fc6f0904350b</UserSecretsId>
+    <AssemblyVersion></AssemblyVersion>
+    <FileVersion></FileVersion>
+	<Version>3.0.8-Beta</Version>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="ElectronNET.API" Version="13.5.1" />
-    <PackageReference Include="Serilog.AspNetCore" Version="4.1.0" />
-    <PackageReference Include="Serilog.Extensions.Logging.File" Version="2.0.0" />
+    <PackageReference Include="Serilog.AspNetCore" Version="6.0.1" />
+    <PackageReference Include="Serilog.Extensions.Logging.File" Version="3.0.0" />
     <PackageReference Include="Serilog.Sinks.File" Version="5.0.0" />
-    <PackageReference Include="SharpPcap" Version="6.1.0" />
+    <PackageReference Include="SharpPcap" Version="6.2.5" />
     <PackageReference Include="System.Collections" Version="4.3.0" />
     <PackageReference Include="taglib-sharp-netstandard2.0" Version="2.1.0" />
-    <PackageReference Include="TwitchLib" Version="3.3.0" />
-    <PackageReference Include="TwitchLib.Client" Version="3.2.4" />
+    <PackageReference Include="TwitchLib" Version="3.5.3" />
+    <PackageReference Include="TwitchLib.Client" Version="3.3.1" />
   </ItemGroup>
   <ItemGroup>
     <Content Update="electron.manifest.json">

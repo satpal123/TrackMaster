@@ -1,7 +1,6 @@
 ﻿using ElectronNET.API;
 using ElectronNET.API.Entities;
 using Microsoft.AspNetCore.SignalR;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System;
@@ -21,19 +20,18 @@ namespace TrackMaster.Services.TwitchServices
     public class TwitchBot : IHostedService
     {
         TwitchClient client;
-        public static string appfullpath;
         private readonly IHubContext<TrackistHub> _tracklisthubContext;
         private string _twitchUsername;
         private string _twitchPassword;
         private string _twitchChannel;
         private readonly ILogger _logger;
         private Timer _timer;
+        private readonly DataFields _dataFields;
 
-        public static bool IsConnected;
-
-        public TwitchBot(IHubContext<TrackistHub> synchub, ILogger<TwitchBot> logger)
+        public TwitchBot(IHubContext<TrackistHub> synchub, ILogger<TwitchBot> logger, DataFields dataFields)
         {
             _tracklisthubContext = synchub;
+            _dataFields = dataFields;
             _logger = logger;            
         }
 
@@ -50,7 +48,7 @@ namespace TrackMaster.Services.TwitchServices
         {
             _logger.LogInformation("Timed Background Service is working.");
 
-            if (!IsConnected)
+            if (!_dataFields.IsConnected)
             {
                 Console.WriteLine("Twitch Bot connection retry!");
                 _logger.LogError("Twitch Bot connection retry");
@@ -70,7 +68,7 @@ namespace TrackMaster.Services.TwitchServices
             }
             else
             {
-                await _tracklisthubContext.Clients.All.SendAsync("DeviceAndTwitchStatus", 2, "Connected to Twitch!");
+                await _tracklisthubContext.Clients.All.SendAsync("DeviceAndTwitchStatus", 2, "Connected to Twitch Bot!");
             }
         }
 
@@ -80,7 +78,7 @@ namespace TrackMaster.Services.TwitchServices
             return Task.CompletedTask;
         }
 
-        public async Task Bot()
+        private async Task Bot()
         { 
             try
             {
@@ -89,13 +87,13 @@ namespace TrackMaster.Services.TwitchServices
 
                 await Task.Run(() =>
                 {
-                    ConnectionCredentials credentials = new ConnectionCredentials(_twitchUsername, _twitchPassword);
+                    ConnectionCredentials credentials = new(_twitchUsername, _twitchPassword);
                     var clientOptions = new ClientOptions
                     {
                         MessagesAllowedInPeriod = 750,
                         ThrottlingPeriod = TimeSpan.FromSeconds(30)
                     };
-                    WebSocketClient customClient = new WebSocketClient(clientOptions);
+                    WebSocketClient customClient = new(clientOptions);
                     client = new TwitchClient(customClient);
                     client.Initialize(credentials, _twitchChannel);
                     client.OnMessageReceived += Client_OnMessageReceived;
@@ -108,19 +106,18 @@ namespace TrackMaster.Services.TwitchServices
                 Console.WriteLine("Twitch Bot not configured! ");
                 _logger.LogError("Twitch Bot not configured!" + ex.Message);
                 await _tracklisthubContext.Clients.All.SendAsync("DeviceAndTwitchStatus", 2, ex.Message);
-                IsConnected = false;
+                _dataFields.IsConnected = false;
             }            
         }
         private void Client_OnConnected(object sender, OnConnectedArgs e)
         {
-            IsConnected = true;
-            Console.WriteLine($"Connected to {e.AutoJoinChannel}");
+            _dataFields.IsConnected = true;
             _tracklisthubContext.Clients.All.SendAsync("ReceiveMessage", "twitch", $"Connected to {e.AutoJoinChannel}");            
         }
 
         private void Client_OnMessageReceived(object sender, OnMessageReceivedArgs e)
         {
-            MixStatus mixStatus = new MixStatus();
+            MixStatus mixStatus = new(_dataFields);
 
             if (e.ChatMessage.Message == "!tr")
                 client.SendMessage(e.ChatMessage.Channel, mixStatus.Mixstatus());
@@ -129,20 +126,20 @@ namespace TrackMaster.Services.TwitchServices
                 client.SendMessage(e.ChatMessage.Channel, mixStatus.TrackHistory());
         }
 
-        private static async Task<Root> GetSetTwitchCredentials()
+        private async Task<Root> GetSetTwitchCredentials()
         {
-            SettingsHelper settingsHelper = new SettingsHelper();
+            SettingsHelper settingsHelper = new(_dataFields);
 
             if (HybridSupport.IsElectronActive)
             {
                 string path = await Electron.App.GetPathAsync(PathName.UserData);
-                appfullpath = path + @"\Settings.json";
-                return settingsHelper.GetTwitchCredentials(appfullpath);
+                _dataFields.Appfullpath = path + @"\Settings.json";
+                return settingsHelper.GetTwitchCredentials(_dataFields.Appfullpath);
             }
             else
             {
-                appfullpath = @"C:\Users\satpa\AppData\Roaming\Electron\Settings.json";
-                return settingsHelper.GetTwitchCredentials(appfullpath);
+                _dataFields.Appfullpath = @"C:\Users\satpa\AppData\Roaming\Electron\Settings.json";
+                return settingsHelper.GetTwitchCredentials(_dataFields.Appfullpath);
             }
         }
     }

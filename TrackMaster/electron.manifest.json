@@ -11,8 +11,8 @@
   "build": {
     "appId": "com.TrackMaster.app",
     "productName": "TrackMaster",
-    "copyright": "Copyright © 2021",
-    "buildVersion": "3.0.7-Alpha",
+    "copyright": "Copyright © 2022",
+    "buildVersion": "3.0.9-Beta",
     "compression": "maximum",    
     "directories": {
       "output": "../../../bin/Desktop"

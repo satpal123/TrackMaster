@@ -15,7 +15,7 @@
         $('#sidebar').find('a[href="' + location.pathname + '"]').closest('li').addClass('active')
 
         PlayerOneRestoreMetadata();
-        PlayerTwoRestoreMetadata();
+        PlayerTwoRestoreMetadata();        
     </script>
 }
 <div class="row">
@@ -28,8 +28,15 @@
         <div id="loading" class="loading" style="display:none; justify-content:center; align-items:center; display:flex; min-height:20vh;">
             <center><img src="~/Images/ajax-loader.gif" />  Searching for controller...please wait!</center>
         </div>
-    </div>
-        
+    </div>        
 </div>
 <br />
-@await Html.PartialAsync("/Views/Shared/_DeviceNetworkInformation.cshtml")
+<div class="row">
+    <div class="col-md-5">
+        @await Html.PartialAsync("/Views/Shared/_DeviceNetworkInformation.cshtml")
+    </div>
+    <div class="col-md-7">
+        @await Html.PartialAsync("/Views/Shared/_ImportantNote.cshtml")
+    </div>
+</div>
+
