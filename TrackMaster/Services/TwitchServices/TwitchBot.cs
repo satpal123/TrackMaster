@@ -85,21 +85,19 @@ namespace TrackMaster.Services.TwitchServices
                 if (string.IsNullOrEmpty(_twitchUsername) || string.IsNullOrEmpty(_twitchPassword))
                     throw new ArgumentException();
 
-                await Task.Run(() =>
+                ConnectionCredentials credentials = new(_twitchUsername, _twitchPassword);
+                var clientOptions = new ClientOptions
                 {
-                    ConnectionCredentials credentials = new(_twitchUsername, _twitchPassword);
-                    var clientOptions = new ClientOptions
-                    {
-                        MessagesAllowedInPeriod = 750,
-                        ThrottlingPeriod = TimeSpan.FromSeconds(30)
-                    };
-                    WebSocketClient customClient = new(clientOptions);
-                    client = new TwitchClient(customClient);
-                    client.Initialize(credentials, _twitchChannel);
-                    client.OnMessageReceived += Client_OnMessageReceived;
-                    client.OnConnected += Client_OnConnected;
-                    client.Connect();
-                });
+                    MessagesAllowedInPeriod = 750,
+                    ThrottlingPeriod = TimeSpan.FromSeconds(30)
+                };
+                WebSocketClient customClient = new(clientOptions);
+                client = new TwitchClient(customClient);
+                client.Initialize(credentials, _twitchChannel);
+                client.OnMessageReceived += Client_OnMessageReceived;
+                client.OnConnected += Client_OnConnected;
+                client.Connect();
+
             }
             catch (Exception ex)
             {
@@ -109,6 +107,7 @@ namespace TrackMaster.Services.TwitchServices
                 _dataFields.IsConnected = false;
             }            
         }
+
         private void Client_OnConnected(object sender, OnConnectedArgs e)
         {
             _dataFields.IsConnected = true;
