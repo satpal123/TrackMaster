@@ -37,9 +37,7 @@ namespace TrackMaster.Services.Sniffy
         private static string globalrekordboxid1, globalrekordboxid2;
         private static int playernumber;
         private static string fadermaster;
-
-        private static Tuple<int, string> deck1;
-        private static Tuple<int, string> deck2;
+        
         private static List<string> getTrackMetadataSeq = new();
         private bool trackloaded_player1, trackloaded_player2;
         private bool AlbumArtloaded_player1, AlbumArtloaded_player2;

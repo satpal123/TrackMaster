@@ -27,6 +27,7 @@ namespace TrackMaster.Helper
         public bool Player1a { get; set; } = false;
         public bool Player2a { get; set; } = false;
         public bool IsConnected { get; set; }
+        public bool BotManuallyStopped { get; set; }
 
         //Metadata Related Data Fields
         public string Trackpath { get; set; }

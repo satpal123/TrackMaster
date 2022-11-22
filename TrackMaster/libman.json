@@ -14,7 +14,7 @@
     {
       "library": "jquery-ajax-unobtrusive@3.2.6",
       "destination": "wwwroot/lib/jquery-ajax-unobtrusive/"
-    },   
+    },
     {
       "provider": "unpkg",
       "library": "bootstrap@5.1.3",
@@ -32,6 +32,15 @@
         "dist/js/bootstrap.js.map",
         "dist/js/bootstrap.min.js",
         "dist/js/bootstrap.min.js.map"
+      ]
+    },    
+    {
+      "provider": "unpkg",
+      "library": "bootstrap5-toggle@4.3.4",
+      "destination": "wwwroot/lib/bootstrap5-toggle/",
+      "files": [
+        "css/bootstrap5-toggle.min.css",
+        "js/bootstrap5-toggle.min.js"
       ]
     }
   ]

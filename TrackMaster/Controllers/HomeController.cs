@@ -20,6 +20,7 @@ namespace TrackMaster.Controllers
         public IActionResult Index()
         {
             ViewBag.ControllerFound = _dataFields.ControllerFound;
+            ViewBag.BotManuallyStopped = _dataFields.BotManuallyStopped;
 
             return View();
         }

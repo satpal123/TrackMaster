@@ -33,8 +33,14 @@ namespace TrackMaster
             services.AddSignalR();
             services.AddSingleton(Configuration);            
             services.AddSingleton<IHostedService, Sniffy>();
-            services.AddSingleton<IHostedService, TwitchBot>();
+            //services.AddSingleton<IHostedService, TwitchBot>();
             services.AddSingleton<DataFieldsInstance>();
+            services.AddHostedService<TwitchBot>();
+
+            services.AddSingleton<ITimerHostedService, TwitchBot>(serviceProvider =>
+            {
+                return TwitchBot.Instance;
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
