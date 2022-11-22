@@ -4,6 +4,10 @@
 
 @section scripts{
     <script>
+        if ('@ViewBag.BotManuallyStopped' == 'True') {     
+            $("#twitch-status").text("Twitch Bot is Stopped manually");
+        }
+
         if ('@ViewBag.ControllerFound' === true) {
             $("#loading").hide();
             $("#playerinfo").show();

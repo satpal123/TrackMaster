@@ -17,7 +17,11 @@ using TwitchLib.Communication.Models;
 
 namespace TrackMaster.Services.TwitchServices
 {
-    public class TwitchBot : IHostedService
+    public interface ITimerHostedService : IHostedService
+    {
+
+    }
+    public class TwitchBot : ITimerHostedService
     {
         TwitchClient client;
         private readonly IHubContext<TrackistHub> _tracklisthubContext;
@@ -25,11 +29,19 @@ namespace TrackMaster.Services.TwitchServices
         private string _twitchPassword;
         private string _twitchChannel;
         private readonly ILogger _logger;
-        private Timer _timer;
+        private static Timer _timer;
         private readonly DataFields _dataFields;
+
+        private static TwitchBot _instance;
+
+        public static TwitchBot Instance => _instance;       
 
         public TwitchBot(IHubContext<TrackistHub> synchub, ILogger<TwitchBot> logger, DataFields dataFields)
         {
+            if (_instance == null)
+            {
+                _instance = this;
+            }
             _tracklisthubContext = synchub;
             _dataFields = dataFields;
             _logger = logger;            
@@ -48,33 +60,39 @@ namespace TrackMaster.Services.TwitchServices
         {
             _logger.LogInformation("Timed Background Service is working.");
 
-            if (!_dataFields.IsConnected)
+            if(_dataFields.BotManuallyStopped == false)
             {
-                Console.WriteLine("Twitch Bot connection retry!");
-                _logger.LogError("Twitch Bot connection retry");
-
-                await _tracklisthubContext.Clients.All.SendAsync("DeviceAndTwitchStatus", 2, "Twitch Bot connection retry!");
-
-                var result = await GetSetTwitchCredentials();
-
-                if (result.TwitchCredentials != null)
+                if (!_dataFields.IsConnected)
                 {
-                    _twitchUsername = result.TwitchCredentials.Username;
-                    _twitchPassword = result.TwitchCredentials.Password;
-                    _twitchChannel = result.TwitchCredentials.Channel;
+                    Console.WriteLine("Twitch Bot connection retry!");
+                    _logger.LogError("Twitch Bot connection retry");
 
-                    await Bot();
+                    await _tracklisthubContext.Clients.All.SendAsync("DeviceAndTwitchStatus", 2, "Twitch Bot connection retry!");
+
+                    var result = await GetSetTwitchCredentials();
+
+                    if (result.TwitchCredentials != null)
+                    {
+                        _twitchUsername = result.TwitchCredentials.Username;
+                        _twitchPassword = result.TwitchCredentials.Password;
+                        _twitchChannel = result.TwitchCredentials.Channel;
+
+                        await Bot();
+                    }
                 }
-            }
-            else
-            {
-                await _tracklisthubContext.Clients.All.SendAsync("DeviceAndTwitchStatus", 2, "Connected to Twitch Bot!");
+                else
+                {
+                    await _tracklisthubContext.Clients.All.SendAsync("DeviceAndTwitchStatus", 2, "Connected to Twitch Bot!");
+                }
             }
         }
 
         public Task StopAsync(CancellationToken cancellationToken)
         {
-            _logger.LogInformation("TwitchBot Service is Stopping");
+            _dataFields.IsConnected = false;
+            _dataFields.BotManuallyStopped = true;
+            client.Disconnect();
+            _logger.LogError("TwitchBot Service is Stopping");
             return Task.CompletedTask;
         }
 

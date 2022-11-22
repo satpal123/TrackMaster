@@ -3,7 +3,26 @@
 }
 
 @section scripts{
-    <script>
+<script>
+    if ('@ViewBag.BotManuallyStopped' == 'True') {
+        $('#botstatus').bootstrapToggle('off')
+    }
+
+    if ('@ViewBag.BotManuallyStopped' == 'False') {
+        $('#botstatus').bootstrapToggle('on')
+    }
+
+    $(function () {
+        $('#botstatus').change(function () {
+           $.ajax({
+                    url: '@Url.Action("StartStopBot", "Settings")',
+                    type: 'POST',
+                    success: function(response) {
+                        onSuccess;
+                    }
+                });
+        });
+    });
         var onSuccess = function (data) {
             $('.toast').find("strong.mr-auto").html(data.title);
             $('.toast').find("div.toast-body").html(data.message);
@@ -54,6 +73,20 @@
                     </div>
                     <button type="submit" class="btn btn-primary">Save</button>
                 </form>
+            </div>
+        </div>
+    </div>
+</div>
+<br />
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">  
+            <div class="card-header">
+                Twitch Bot Turn On or Off - This will only turn off the bot temporarily.
+            </div>
+            <div class="card-body">
+                <label class="form-label">Twitch Bot : </label>
+                <input id="botstatus" type="checkbox" data-toggle="toggle"> 
             </div>
         </div>
     </div>
