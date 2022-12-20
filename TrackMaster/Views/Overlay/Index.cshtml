@@ -1,43 +1,84 @@
 ﻿@{
     ViewData["Title"] = "Overlay";
+    @model TrackMaster.Models.OverlaySettingsModel
+
 }
 
 @section scripts{
     <script>
-       function myFunction() {
-          /* Get the text field */
-          var copyText = document.getElementById("nowplaying");
+        if ('@ViewBag.DisplayAlbumArt' == 'True') {
+            $('#albumartshowhide').bootstrapToggle('on')
+        }
 
-          /* Select the text field */
-          copyText.select();
-          copyText.setSelectionRange(0, 99999); /* For mobile devices */
+        if ('@ViewBag.DisplayAlbumArt' == 'False') {
+            $('#albumartshowhide').bootstrapToggle('off')
+        }
+        $(function () {
+            $('#albumartshowhide').change(function () {
+                var displayalbumart = document.getElementById('albumartshowhide').checked;
 
-           /* Copy the text inside the text field */
-          navigator.clipboard.writeText(copyText.value);         
+                $.ajax({
+                    url: '@Url.Action("SaveSettings", "Overlay")',
+                    data: { "DisplayAlbumArt": displayalbumart },
+                    type: 'POST',
+                    success: onSuccess
+                });
+            });
+        });
+        var onSuccess = function (data) {
+            $('.toast').find("strong.mr-auto").html(data.title);
+            $('.toast').find("div.toast-body").html(data.message);
+            $('.toast').toast('show');
+        };
+
+        function copyLink() {
+            var copyText = document.getElementById("nowplaying");
+            copyText.select();
+            copyText.setSelectionRange(0, 99999); /* For mobile devices */
+            navigator.clipboard.writeText(copyText.value);
+
+            $('#button-copy').text('Copied!');
+
+            setTimeout(function () {
+                $('#button-copy').text('Copy!');
+            }, 5000);
         }
 
         $('#sidebar').find('a[href="' + location.pathname + '"]').closest('li').addClass('active')
     </script>
 }
-<div class="row">
-    <div class="col-md-12">
-        <div class="card">
-            <div class="card-header">
-               Overlay
+<div class="card">
+    <div class="card-header">
+        <div class="row">
+            <div class="col-md-12 p-2">
+                Overlays can be used as a browser source within the choice of your streaming software by Simply copying the below link.
             </div>
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-md-3">
-                        <div class="control-label">Copy your Overlay :</div>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="container-fluid">
+            <div class="row g-0">
+                <div class="col-12">
+                    <div class="p-3 border" style="background-color:rgba(247,247,247,1)">
+                        <div class="col-md-8">
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="nowplaying" readonly value="http://localhost:8888/overlay/NowPlaying">
+                                <button class="btn btn-success" type="button" id="button-copy" onclick="copyLink()">Copy!</button>
+                            </div>
+                        </div>
                     </div>
-                    <div class="col-md-8">                        
-                       <div class="input-group mb-3">
-                      <input type="text" class="form-control" id="nowplaying" readonly value="http://localhost:8888/overlay/NowPlaying">
-                      <button class="btn btn-secondary" type="button" id="button-copy" onclick="myFunction()">Copy!</button>
+                </div>
+                <div class="col-12">
+                    <div class="p-3 border bg-light">
+                        <input id="albumartshowhide" type="checkbox" data-toggle="toggle" data-size="sm" data-style="quick">
+                        <label class="form-label" style="padding-left:10px">Display Album Art</label>
                     </div>
-                    </div>
-                </div>                
+                </div>
             </div>
         </div>
     </div>
 </div>
+
+
+
+

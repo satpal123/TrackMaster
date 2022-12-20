@@ -1,6 +1,7 @@
 ﻿@{
     Layout = null;
     ViewData["Title"] = "Now Playing";
+    @model TrackMaster.Models.OverlaySettingsModel
  }
 
 <!DOCTYPE html>
@@ -17,14 +18,20 @@
     <script src="~/lib/microsoft/signalr/dist/browser/signalr.js"></script>
     <script src="~/js/trackist.js"></script>
      <script>
-         func1();
-         function func1() {
-                setTimeout(function(){ Nowplaying();}, 1000);
+         //Restore last playing/played track when firing up the Trackmaster 
+         
+         restoreLastTrack();
+         function restoreLastTrack() {
+                setTimeout(function(){ 
+                    Nowplaying();
+                    OverLay();
+                }, 1000);
          }
+         
     </script>
 </head>
 
-<body style="background-color: transparent;">    
+<body style="background-color: transparent;">
     <div class="container mt-3">
         <div class="col-3">
             <h6 id="now-playing" class="text-white overlay-bg-color w-50 text-center">NOW PLAYING</h6>
@@ -35,12 +42,11 @@
             <div class="col-1" id="artwork_div">
                 <img id="artwork" src="~/Images/Cover-no-artwork.jpg" width=80px height=80px />
             </div>
-        <div class="col-6">            
-            <h4 id="track" class="text-white mt-n1" style="text-shadow: 2px 2px 2px #000000;"></h4>
-            <h5 id="artist" class="text-white" style="text-shadow: 2px 2px 2px #000000;"></h5>
+            <div class="col-6">
+                <h4 id="track" class="text-white mt-n1" style="text-shadow: 2px 2px 2px #000000;"></h4>
+                <h5 id="artist" class="text-white" style="text-shadow: 2px 2px 2px #000000;"></h5>
+            </div>
         </div>
-        </div>
-        
     </div>
 </body>
- </html>
+</html>

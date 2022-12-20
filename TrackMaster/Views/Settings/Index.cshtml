@@ -1,28 +1,28 @@
 ﻿@{
     ViewData["Title"] = "Settings";
+    @await Html.PartialAsync("/Views/Shared/_ValidationScriptsPartial.cshtml")
+    @model TrackMaster.Models.TwitchCredentialsModel
 }
 
 @section scripts{
-<script>
-    if ('@ViewBag.BotManuallyStopped' == 'True') {
-        $('#botstatus').bootstrapToggle('off')
-    }
+    <script>
+        if ('@ViewBag.BotManuallyStopped' == 'True') {
+            $('#botstatus').bootstrapToggle('off')
+        }
 
-    if ('@ViewBag.BotManuallyStopped' == 'False') {
-        $('#botstatus').bootstrapToggle('on')
-    }
+        if ('@ViewBag.BotManuallyStopped' == 'False') {
+            $('#botstatus').bootstrapToggle('on')
+        }
 
-    $(function () {
-        $('#botstatus').change(function () {
-           $.ajax({
+        $(function () {
+            $('#botstatus').change(function () {
+                $.ajax({
                     url: '@Url.Action("StartStopBot", "Settings")',
                     type: 'POST',
-                    success: function(response) {
-                        onSuccess;
-                    }
+                    success: onSuccess
                 });
+            });
         });
-    });
         var onSuccess = function (data) {
             $('.toast').find("strong.mr-auto").html(data.title);
             $('.toast').find("div.toast-body").html(data.message);
@@ -36,57 +36,54 @@
     </script>
 }
 
-@{
-    @await Html.PartialAsync("/Views/Shared/_ValidationScriptsPartial.cshtml")
-    @model TrackMaster.Models.TwitchCredentialsModel   
-    
-}
-<div class="row">
-    <div class="col-md-12">
-        <div class="card">
-            <div class="card-header">
+<div class="card">
+    <div class="card-header">
+        <div class="row">
+            <div class="col-md-12 p-2">
                 Twitch Bot Settings
-            </div>
-            <div class="card-body">
-                <form id="formsavesettings" asp-controller="Settings" asp-action="SaveSettings"                      
-                      data-ajax-failure="onFailed" data-ajax-success="onSuccess"
-                      data-ajax="true" data-ajax-method="post">
-                    <div class="form-group">
-                        @Html.LabelFor(p => Model.Username)
-                        @Html.TextBoxFor(p => Model.Username, new { @Id = "Username", @class = "form-control", @placeholder = "Enter username" })
-                        @Html.ValidationMessageFor(p => Model.Username, "", new { @class = "text-danger" })
-                        <small id="usernameHelp" class="form-text text-muted">Enter the Twitch bot username</small>
-                    </div>
-                    <div class="form-group">
-                        @Html.LabelFor(p => Model.Password)
-                        @Html.PasswordFor(p => Model.Password, new { @Id = "Password", @class = "form-control", @placeholder = "Enter OAuth password" })
-                        @Html.ValidationMessageFor(p => Model.Password, "", new { @class = "text-danger" })
-                        <small id="inputPasswordHelp" class="form-text text-muted">Enter the password as oauth:--string--</small>
-                        <a href="https://twitchapps.com/tmi/" target="_blank">Click here to generate your Twitch OAuth Token</a>
-
-                    </div>
-                    <div class="form-group">
-                        @Html.LabelFor(p => Model.Channel)
-                        @Html.TextBoxFor(p => Model.Channel, new { @Id = "Channel", @class = "form-control", @placeholder = "Enter channel name" })
-                        @Html.ValidationMessageFor(p => Model.Channel, "", new { @class = "text-danger" })
-                        <small id="usernameHelp" class="form-text text-muted">Enter the twitch channel name</small>
-                    </div>
-                    <button type="submit" class="btn btn-primary">Save</button>
-                </form>
             </div>
         </div>
     </div>
-</div>
-<br />
-<div class="row">
-    <div class="col-md-12">
-        <div class="card">  
-            <div class="card-header">
-                Twitch Bot Turn On or Off - This will only turn off the bot temporarily.
-            </div>
-            <div class="card-body">
-                <label class="form-label">Twitch Bot : </label>
-                <input id="botstatus" type="checkbox" data-toggle="toggle"> 
+    <div class="card-body">
+        <div class="container-fluid">
+            <div class="row g-0">
+                <div class="col-12">
+                    <div class="p-3 border" style="background-color:rgba(247,247,247,1)">
+                        <div class="col-md-8">
+                            <form id="formsavesettings" asp-controller="Settings" asp-action="SaveSettings"
+                                  data-ajax-failure="onFailed" data-ajax-success="onSuccess"
+                                  data-ajax="true" data-ajax-method="post">
+                                <div class="form-group">
+                                    @Html.LabelFor(p => Model.Username)
+                                    @Html.TextBoxFor(p => Model.Username, new { @Id = "Username", @class = "form-control", @placeholder = "Enter username" })
+                                    @Html.ValidationMessageFor(p => Model.Username, "", new { @class = "text-danger" })
+                                    <small id="usernameHelp" class="form-text text-muted">Enter the Twitch bot username</small>
+                                </div>
+                                <div class="form-group">
+                                    @Html.LabelFor(p => Model.Password)
+                                    @Html.PasswordFor(p => Model.Password, new { @Id = "Password", @class = "form-control", @placeholder = "Enter OAuth password" })
+                                    @Html.ValidationMessageFor(p => Model.Password, "", new { @class = "text-danger" })
+                                    <small id="inputPasswordHelp" class="form-text text-muted">Enter the password as oauth:--string--</small>
+                                    <a href="https://twitchapps.com/tmi/" target="_blank">Click here to generate your Twitch OAuth Token</a>
+
+                                </div>
+                                <div class="form-group">
+                                    @Html.LabelFor(p => Model.Channel)
+                                    @Html.TextBoxFor(p => Model.Channel, new { @Id = "Channel", @class = "form-control", @placeholder = "Enter channel name" })
+                                    @Html.ValidationMessageFor(p => Model.Channel, "", new { @class = "text-danger" })
+                                    <small id="usernameHelp" class="form-text text-muted">Enter the twitch channel name</small>
+                                </div>
+                                <button type="submit" class="btn btn-primary">Save</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12">
+                    <div class="p-3 border bg-light">
+                        <input id="botstatus" type="checkbox" data-toggle="toggle" data-size="sm" data-style="quick">
+                        <label class="form-label" style="padding-left:10px">Twitch Bot Turn On or Off - This will turn off the bot temporarily.</label>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

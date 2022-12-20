@@ -64,11 +64,6 @@ namespace TrackMaster.Services.TwitchServices
             {
                 if (!_dataFields.IsConnected)
                 {
-                    Console.WriteLine("Twitch Bot connection retry!");
-                    _logger.LogError("Twitch Bot connection retry");
-
-                    await _tracklisthubContext.Clients.All.SendAsync("DeviceAndTwitchStatus", 2, "Twitch Bot connection retry!");
-
                     var result = await GetSetTwitchCredentials();
 
                     if (result.TwitchCredentials != null)
@@ -114,6 +109,8 @@ namespace TrackMaster.Services.TwitchServices
                 client.Initialize(credentials, _twitchChannel);
                 client.OnMessageReceived += Client_OnMessageReceived;
                 client.OnConnected += Client_OnConnected;
+                client.OnConnectionError += Client_OnConnectionError;
+                client.OnIncorrectLogin += Client_OnIncorrectLogin;
                 client.Connect();
 
             }
@@ -124,6 +121,20 @@ namespace TrackMaster.Services.TwitchServices
                 await _tracklisthubContext.Clients.All.SendAsync("DeviceAndTwitchStatus", 2, ex.Message);
                 _dataFields.IsConnected = false;
             }            
+        }
+
+        private void Client_OnIncorrectLogin(object sender, OnIncorrectLoginArgs e)
+        {
+            _logger.LogError("Twitch Bot incorrect login");
+
+            _tracklisthubContext.Clients.All.SendAsync("DeviceAndTwitchStatus", 2, "Twitch Bot incorrect login!");
+        }
+
+        private void Client_OnConnectionError(object sender, OnConnectionErrorArgs e)
+        {
+            _logger.LogError("Twitch Bot connection retry");
+
+            _tracklisthubContext.Clients.All.SendAsync("DeviceAndTwitchStatus", 2, "Twitch Bot connection retry!");
         }
 
         private void Client_OnConnected(object sender, OnConnectedArgs e)
@@ -143,7 +154,7 @@ namespace TrackMaster.Services.TwitchServices
                 client.SendMessage(e.ChatMessage.Channel, mixStatus.TrackHistory());
         }
 
-        private async Task<Root> GetSetTwitchCredentials()
+        private async Task<MainSettingsModel> GetSetTwitchCredentials()
         {
             SettingsHelper settingsHelper = new(_dataFields);
 
@@ -151,12 +162,13 @@ namespace TrackMaster.Services.TwitchServices
             {
                 string path = await Electron.App.GetPathAsync(PathName.UserData);
                 _dataFields.Appfullpath = path + @"\Settings.json";
-                return settingsHelper.GetTwitchCredentials(_dataFields.Appfullpath);
+                return settingsHelper.GetSettings(_dataFields.Appfullpath);
             }
             else
             {
-                _dataFields.Appfullpath = @"C:\Users\satpa\AppData\Roaming\Electron\Settings.json";
-                return settingsHelper.GetTwitchCredentials(_dataFields.Appfullpath);
+                var appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+                _dataFields.Appfullpath = appDataPath + @"\Electron\Settings.json";
+                return settingsHelper.GetSettings(_dataFields.Appfullpath);
             }
         }
     }

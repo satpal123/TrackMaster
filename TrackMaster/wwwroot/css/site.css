@@ -73,3 +73,14 @@ body {
 .overlay-bg-color {
     background-color: #9973de;
 }
+
+.build-number {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    padding: 10px
+}
+.quick .toggle-group {
+    transition: none;
+    -webkit-transition: none;
+}
