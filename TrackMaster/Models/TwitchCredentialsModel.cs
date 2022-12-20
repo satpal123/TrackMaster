@@ -22,9 +22,4 @@ namespace TrackMaster.Models
         public string Channel { get; set; }       
 
     }
-    public class Root
-    {
-        [JsonPropertyName("TwitchCredentials")]
-        public TwitchCredentialsModel TwitchCredentials { get; set; }
-    }
 }

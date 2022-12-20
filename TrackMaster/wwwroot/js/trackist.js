@@ -206,6 +206,35 @@ connection.on("NowPlaying", function (artist, track, artwork) {
     }
 });
 
+connection.on("Overlay", function (showartwork) {
+
+    if (localStorage.getItem("show_artwork") == null || (localStorage.getItem("show_artwork") != showartwork)) {
+        localStorage.setItem("show_artwork", showartwork);
+    }
+    else {
+        $('#show_artwork').text(localStorage.getItem("nowplaying_artwork"));
+    }
+
+    if (showartwork) {
+        $("#artwork_div").show();
+    }
+    else {
+        $("#artwork_div").hide();
+    }
+});
+
+function OverLay() {
+
+    if (localStorage.getItem("show_artwork") == 'true') {
+        $("#artwork_div").show();
+        console.log('show');
+    }
+    else {
+        $("#artwork_div").hide();
+        console.log('hide');
+    }
+}
+
 function Nowplaying()
 {
     if (localStorage.getItem("nowplaying_artist") != null) {

@@ -10,7 +10,7 @@ namespace TrackMaster.Controllers
 {
     public class SettingsController : Controller
     {
-        private Root root;
+        private MainSettingsModel MainSettingsModel;
         private readonly DataFields _dataFields;
         private readonly ITimerHostedService _hostedService;
         private readonly IHubContext<TrackistHub> _tracklisthubContext;
@@ -25,16 +25,16 @@ namespace TrackMaster.Controllers
         {
             TwitchCredentialsModel twitchCredentialsModel = new();
             SettingsHelper settingsHelper = new(_dataFields);
-            root = settingsHelper.GetTwitchCredentials(_dataFields.Appfullpath);
+            MainSettingsModel = settingsHelper.GetSettings(_dataFields.Appfullpath);
 
-            ViewBag.TwitchCredentials = root;
+            ViewBag.TwitchCredentials = MainSettingsModel.TwitchCredentials;
             ViewBag.BotManuallyStopped = _dataFields.BotManuallyStopped;
 
-            if (root.TwitchCredentials != null)
+            if (MainSettingsModel.TwitchCredentials != null)
             {
-                twitchCredentialsModel.Username = root.TwitchCredentials.Username;
-                twitchCredentialsModel.Password = root.TwitchCredentials.Password;
-                twitchCredentialsModel.Channel = root.TwitchCredentials.Channel;
+                twitchCredentialsModel.Username = MainSettingsModel.TwitchCredentials.Username;
+                twitchCredentialsModel.Password = MainSettingsModel.TwitchCredentials.Password;
+                twitchCredentialsModel.Channel = MainSettingsModel.TwitchCredentials.Channel;
             }            
 
             return View(twitchCredentialsModel);
@@ -45,9 +45,12 @@ namespace TrackMaster.Controllers
         public IActionResult SaveSettings(TwitchCredentialsModel twitchCredentialsModel)
         {
             if (ModelState.IsValid)
-            {
+            {                
                 SettingsHelper settingsHelper = new(_dataFields);
-                settingsHelper.SetTwitchCredentials(twitchCredentialsModel);
+
+                MainSettingsModel = settingsHelper.GetSettings(_dataFields.Appfullpath);
+                settingsHelper.SetMainSettings(twitchCredentialsModel, MainSettingsModel.OverlaySettings);
+
                 _dataFields.IsConnected = false;
             }
 

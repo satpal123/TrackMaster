@@ -37,8 +37,11 @@
                 </li>
                 <li id="overlay">
                     <a asp-area="" asp-controller="Overlay" asp-action="Index">Overlay</a>
-                </li>  
-            </ul>            
+                </li>                
+            </ul>  
+            <div class="build-number">
+                Build @VersionHelper.GetAssemblyVersion()
+            </div>
         </nav>
         <!-- Page Content -->
         <div id="content">
@@ -50,7 +53,7 @@
                             <span></span>
                             <span></span>
                         </button>
-                        <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">Track Master - Build @VersionHelper.GetAssemblyVersion()</a>
+                        <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">Track Master</a>
                     </div>
                 </nav>
             </header>

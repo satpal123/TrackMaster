@@ -1,7 +1,7 @@
-﻿using System.IO;
+﻿using System.Collections.Generic;
+using System.IO;
 using System.Text.Json;
 using TrackMaster.Models;
-using TrackMaster.Services.TwitchServices;
 
 namespace TrackMaster.Helper
 {
@@ -15,32 +15,40 @@ namespace TrackMaster.Helper
             _dataFields = dataFields;
         }
 
-        public TwitchCredentialsModel SetTwitchCredentials(TwitchCredentialsModel TwitchCredentials)
+        public TwitchCredentialsModel SetMainSettings(TwitchCredentialsModel TwitchCredentials, OverlaySettingsModel OverlaySettings)
         {
             var options = new JsonSerializerOptions
             {
                 WriteIndented = true
             };
 
-            var root = new
+            TwitchCredentials = new TwitchCredentialsModel
             {
-                TwitchCredentials = new TwitchCredentialsModel
-                {
-                    Username = TwitchCredentials.Username,
-                    Password = TwitchCredentials.Password,
-                    Channel = TwitchCredentials.Channel
-                }
+                Username = TwitchCredentials.Username,
+                Password = TwitchCredentials.Password,
+                Channel = TwitchCredentials.Channel
             };
 
-            filecontent = JsonSerializer.Serialize(root, options);
+            OverlaySettings = new OverlaySettingsModel
+            {
+                DisplayAlbumArt = OverlaySettings.DisplayAlbumArt,
+            };
+
+            MainSettingsModel mainSettingsModel = new()
+            {
+                TwitchCredentials = TwitchCredentials,
+                OverlaySettings = OverlaySettings
+            };
+
+            filecontent = JsonSerializer.Serialize(mainSettingsModel, options);
             File.WriteAllText(_dataFields.Appfullpath, filecontent);
 
             return TwitchCredentials;
-        }
+        }       
 
-        public Root GetTwitchCredentials(string settingsPath)
+        public MainSettingsModel GetSettings(string settingsPath)
         {
-            Root root = new();
+            MainSettingsModel mainSettings  = new();
 
             var filecheck = File.Exists(settingsPath);
             
@@ -50,10 +58,10 @@ namespace TrackMaster.Helper
                 {
                     filecontent = File.ReadAllText(settingsPath);
 
-                    root = JsonSerializer.Deserialize<Root>(filecontent);
+                    mainSettings = JsonSerializer.Deserialize<MainSettingsModel>(filecontent);
                 }
             } 
-            return root;
+            return mainSettings;
         }
     }
 }

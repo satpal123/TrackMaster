@@ -60,6 +60,7 @@ namespace TrackMaster.Services.Sniffy
             _dataFields = dataFields;
             _logger = logger;
         }
+
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             stoppingToken.Register(() =>
@@ -83,16 +84,19 @@ namespace TrackMaster.Services.Sniffy
             }
             Console.WriteLine($"StatusCheckerService background task is stopping.");
         }
+
         private void DoWork(object state)
         {
             OverlayChangeObserver overlayObserver = new(_dataFields);
             overlayObserver.MixStatusChanged += MixStatusChanged;
             overlayObserver.Start();
         }
+
         private async Task CapturePacketsInitialAsync()
         {
             j = await GetConnectedControllerIPAsync();
         }
+
         private async Task CapturePacketsAsync()
         {
                 await Task.Run(() =>
@@ -121,7 +125,7 @@ namespace TrackMaster.Services.Sniffy
                     device.OnPacketArrival += new PacketArrivalEventHandler(Device_OnPacketArrivalTcp);
 
                     // Open the device for capturing
-                    int readTimeoutMilliseconds = 1500;
+                    int readTimeoutMilliseconds = 2500;
 
                     if (device is LibPcapLiveDevice)
                     {
@@ -143,6 +147,7 @@ namespace TrackMaster.Services.Sniffy
                 });
                 
         }
+
         private async Task<int> GetConnectedControllerIPAsync()
         {
             // Retrieve the device list
@@ -173,6 +178,7 @@ namespace TrackMaster.Services.Sniffy
             }
             return i;
         }
+
         private async Task AutoConfigureAsync(int i, CaptureDeviceList devices)
         {
             using var device = devices[i];
@@ -183,7 +189,7 @@ namespace TrackMaster.Services.Sniffy
             device.OnPacketArrival += new PacketArrivalEventHandler(Device_OnPacketArrivalUdpInitial);
 
             // Open the device for capturing
-            int readTimeoutMilliseconds = 1500;
+            int readTimeoutMilliseconds = 2500;
            if (device is LibPcapLiveDevice)
             {
                 var livePcapDevice = device as LibPcapLiveDevice;
@@ -200,6 +206,7 @@ namespace TrackMaster.Services.Sniffy
             await Task.Delay(6000);
             device.StopCapture();
         }
+
         private void Device_OnPacketArrivalUdpInitial(object sender, PacketCapture e)
         {
             currentpcid = GetLocalIPAddress();
@@ -234,6 +241,7 @@ namespace TrackMaster.Services.Sniffy
                 }
             }
         }
+
         private void Device_OnPacketArrivalUdp(object sender, PacketCapture e)
         {
             RawCapture _packet = e.GetPacket();
@@ -349,6 +357,7 @@ namespace TrackMaster.Services.Sniffy
                 }
             }
         }
+
         private void Device_OnPacketArrivalTcp(object sender, PacketCapture e)
         {
             try
@@ -381,6 +390,7 @@ namespace TrackMaster.Services.Sniffy
                 Console.WriteLine(ex.Message);
             }            
         }
+
         private void GetPlayerNumberAndRekordBoxId(byte[] magicnumberPacket, string result)
         {
             if (result.Contains(Constants.DataRequest))
@@ -407,6 +417,7 @@ namespace TrackMaster.Services.Sniffy
                 }
             }
         }
+
         private void GetTotalMenuItems(string result)
         {
             if (result.Contains("1030000F0614"))
@@ -418,6 +429,7 @@ namespace TrackMaster.Services.Sniffy
                 totallist.Add(totalitems);
             }
         }
+
         private void Players(string result)
         {
             if (result.StartsWith(Constants.MAGIC_NUMBER) & result.Contains(Constants.MenuItemResponse) & result.Contains(Constants.MenuFooterReponse))
@@ -453,6 +465,7 @@ namespace TrackMaster.Services.Sniffy
                 getTrackMetadataSeq.Clear();
             }
         }        
+
         private void Player1(string result)
         {
             countrbidoccurance1 = globalrekordboxid1 != null ? Regex.Matches(result, globalrekordboxid1).Count : 0;
@@ -510,6 +523,7 @@ namespace TrackMaster.Services.Sniffy
             }
             
         }
+
         private void Player2(string result)
         {
             countrbidoccurance2 = globalrekordboxid2 != null ? Regex.Matches(result, globalrekordboxid2).Count : 0;
@@ -564,6 +578,7 @@ namespace TrackMaster.Services.Sniffy
                 }
             }               
         }
+
         private static TrackMetaDataModel GetTrackMetaData(string result)
         {
             TrackMetaDataModel returnMetaData = null;
@@ -590,6 +605,7 @@ namespace TrackMaster.Services.Sniffy
             }
             return returnMetaData;
         }
+
         private static TrackMetaDataModel GetAlbumArtData(string result)
         {
             TrackMetaDataModel returnMetaData = null;
@@ -628,6 +644,7 @@ namespace TrackMaster.Services.Sniffy
 
             return returnMetaData;
         }
+
         private static string ConvertToMinsSecs(int totalSeconds)
         {
             int seconds = totalSeconds % 60;
@@ -635,6 +652,7 @@ namespace TrackMaster.Services.Sniffy
             string time = minutes + "m " + seconds+ "s";
             return time;
         }
+
         private static TrackMetaDataModel GetTrackMetaData(TrackMetaDataModel trackMetaDataModel)
         {
             TrackMetaDataModel _trackMetaData = new()
@@ -649,6 +667,7 @@ namespace TrackMaster.Services.Sniffy
 
             return _trackMetaData;
         }
+
         private static List<string> GetLocalIPAddress()
         {
             List<string> GetIP = new();
@@ -668,6 +687,7 @@ namespace TrackMaster.Services.Sniffy
             }
             return GetIP;
         }
+
         private static string HextoString(string InputText)
         {
             byte[] bb = Enumerable.Range(0, InputText.Length)
@@ -676,6 +696,7 @@ namespace TrackMaster.Services.Sniffy
                              .ToArray();
             return Encoding.BigEndianUnicode.GetString(bb);
         }
+
         private void MixStatusChanged(object sender, OverlayChangeObserver.MixStatusChangedEventArgs e)
         {
             if (e.Player1)
@@ -689,6 +710,7 @@ namespace TrackMaster.Services.Sniffy
                 TrackHistory(_dataFields.Trackpath2);
             } 
         }
+
         private List<string> TrackHistory(string trackMetadata)
         {
             var checkHistoryTrackExists = (from tr in _dataFields.TrackList
@@ -710,6 +732,7 @@ namespace TrackMaster.Services.Sniffy
 
             return _dataFields.TrackList;
         }
+
         public class VersionHelper
         {
             public static string GetAssemblyVersion()

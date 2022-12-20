@@ -33,7 +33,6 @@ namespace TrackMaster
             services.AddSignalR();
             services.AddSingleton(Configuration);            
             services.AddSingleton<IHostedService, Sniffy>();
-            //services.AddSingleton<IHostedService, TwitchBot>();
             services.AddSingleton<DataFieldsInstance>();
             services.AddHostedService<TwitchBot>();
 
