@@ -24,7 +24,7 @@ namespace TrackMaster.Controllers
 
             if (MainSettingsModel.OverlaySettings != null)
             {
-                ViewBag.DisplayAlbumArt = MainSettingsModel.OverlaySettings.DisplayAlbumArt;
+                ViewBag.DisplayAlbumArt = _dataFields.ShowArtwork = MainSettingsModel.OverlaySettings.DisplayAlbumArt;
                 _tracklisthubContext.Clients.All.SendAsync("Overlay", MainSettingsModel.OverlaySettings.DisplayAlbumArt);
             }
 
@@ -40,6 +40,7 @@ namespace TrackMaster.Controllers
 
                 MainSettingsModel = settingsHelper.GetSettings(_dataFields.Appfullpath);
                 settingsHelper.SetMainSettings(MainSettingsModel.TwitchCredentials, overlaySettingsModel);
+                _dataFields.ShowArtwork = overlaySettingsModel.DisplayAlbumArt;
 
                 _tracklisthubContext.Clients.All.SendAsync("Overlay", overlaySettingsModel.DisplayAlbumArt);
 
@@ -53,7 +54,7 @@ namespace TrackMaster.Controllers
             SettingsHelper settingsHelper = new(_dataFields);
 
             MainSettingsModel = settingsHelper.GetSettings(_dataFields.Appfullpath);
-            ViewBag.DisplayAlbumArt = MainSettingsModel.OverlaySettings.DisplayAlbumArt;
+            ViewBag.DisplayAlbumArt = _dataFields.ShowArtwork = MainSettingsModel.OverlaySettings.DisplayAlbumArt;
             _tracklisthubContext.Clients.All.SendAsync("Overlay", MainSettingsModel.OverlaySettings.DisplayAlbumArt);
 
             return View();

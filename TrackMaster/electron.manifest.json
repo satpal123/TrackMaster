@@ -12,7 +12,7 @@
     "appId": "com.TrackMaster.app",
     "productName": "TrackMaster",
     "copyright": "Copyright © 2022",
-    "buildVersion": "0.7.0-Alpha",
+    "buildVersion": "0.7.1-Alpha",
     "compression": "maximum",
     "directories": {
       "output": "../../../bin/Desktop"

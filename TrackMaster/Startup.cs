@@ -34,8 +34,6 @@ namespace TrackMaster
             services.AddSingleton(Configuration);            
             services.AddSingleton<IHostedService, Sniffy>();
             services.AddSingleton<DataFieldsInstance>();
-            services.AddHostedService<TwitchBot>();
-
             services.AddSingleton<ITimerHostedService, TwitchBot>(serviceProvider =>
             {
                 return TwitchBot.Instance;

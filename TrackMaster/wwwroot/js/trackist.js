@@ -169,7 +169,7 @@ connection.on("DeviceAndTwitchStatus", function (_id, message) {
     }
 });
 
-connection.on("NowPlaying", function (artist, track, artwork) {
+connection.on("NowPlaying", function (artist, track, artwork, showartwork) {
     if (localStorage.getItem("nowplaying_artist") == null || (localStorage.getItem("nowplaying_artist") != artist)) {
         localStorage.setItem("nowplaying_artist", artist);
         $('#artist').text(artist);        
@@ -198,11 +198,26 @@ connection.on("NowPlaying", function (artist, track, artwork) {
     else {
         $("#artwork_div").show();
     }
+
     if ($("#artist").text() == "null") {
         $("#artist").hide();
     }
     else {
         $("#artist").show();
+    }
+
+    if (localStorage.getItem("show_artwork") == null || (localStorage.getItem("show_artwork") != showartwork)) {
+        localStorage.setItem("show_artwork", showartwork);
+    }
+    else {
+        $('#show_artwork').text(localStorage.getItem("nowplaying_artwork"));
+    }
+
+    if (showartwork) {
+        $("#artwork_div").show();
+    }
+    else {
+        $("#artwork_div").hide();
     }
 });
 

@@ -21,6 +21,7 @@ namespace TrackMaster.Helper
         //Common Data Fields
         public string Playername { get; set; }
         public string Appfullpath { get; set; }
+        public string RestoreTrackspath { get; set; }
         public bool ControllerFound { get; set; } = false;
         public string ControllerIP { get; set; }
         public List<string> TrackList { get; set; } = new List<string>();
@@ -28,6 +29,7 @@ namespace TrackMaster.Helper
         public bool Player2a { get; set; } = false;
         public bool IsConnected { get; set; }
         public bool BotManuallyStopped { get; set; }
+        public bool ShowArtwork { get; set; }
 
         //Metadata Related Data Fields
         public string Trackpath { get; set; }
