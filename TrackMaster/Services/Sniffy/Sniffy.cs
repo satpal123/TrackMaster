@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.SignalR;
+﻿using ElectronNET.API.Entities;
+using ElectronNET.API;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -51,6 +53,8 @@ namespace TrackMaster.Services.Sniffy
         private Timer _timer;
         private readonly DataFields _dataFields;
 
+        private RestoreTrackMetadataModel RestoreTrackMetadataModel;
+
         #endregion
         public Sniffy(IConfiguration configuration, IHubContext<TrackistHub> synchub, ILogger<Sniffy> logger, DataFields dataFields)
         {
@@ -74,8 +78,10 @@ namespace TrackMaster.Services.Sniffy
                         await CapturePacketsInitialAsync();
                     }
 
+                    RestoreTracks();
+
                     _timer = new(DoWork, null, TimeSpan.Zero, TimeSpan.FromSeconds(1));
-                    await CapturePacketsAsync();                    
+                    await CapturePacketsAsync();
                 }
                 catch (Exception ex)
                 {
@@ -85,11 +91,31 @@ namespace TrackMaster.Services.Sniffy
             Console.WriteLine($"StatusCheckerService background task is stopping.");
         }
 
+        private void RestoreTracks()
+        {
+            var result = GetSetRestoreTrackMetadata();
+
+            if (result.PlayersTrackMetaDataModel != null)
+            {
+                _dataFields.Trackartist1 = result.PlayersTrackMetaDataModel.Trackartist1;
+                _dataFields.Tracktitle1 = result.PlayersTrackMetaDataModel.Tracktitle1;
+                _dataFields.Trackpath = _dataFields.Tracktitle1 != null & _dataFields.Trackartist1 != null
+                        ? _dataFields.Trackartist1 + " - " + _dataFields.Tracktitle1
+                        : _dataFields.Tracktitle1 != null & _dataFields.Trackartist1 == null ? _dataFields.Tracktitle1 : "ID - ID";
+
+                _dataFields.Trackartist2 = result.PlayersTrackMetaDataModel.Trackartist2;
+                _dataFields.Tracktitle2 = result.PlayersTrackMetaDataModel.Tracktitle2;
+                _dataFields.Trackpath2 = _dataFields.Tracktitle2 != null & _dataFields.Trackartist2 != null
+                   ? _dataFields.Trackartist2 + " - " + _dataFields.Tracktitle2
+                   : _dataFields.Tracktitle2 != null & _dataFields.Trackartist2 == null ? _dataFields.Tracktitle2 : "ID - ID";
+            }
+        }
+
         private void DoWork(object state)
         {
             OverlayChangeObserver overlayObserver = new(_dataFields);
             overlayObserver.MixStatusChanged += MixStatusChanged;
-            overlayObserver.Start();
+            overlayObserver.Start();            
         }
 
         private async Task CapturePacketsInitialAsync()
@@ -497,6 +523,10 @@ namespace TrackMaster.Services.Sniffy
                             _tracklisthubContext.Clients.All.SendAsync("PlayerOne", 10, _dataFields.Genre1);
 
                             trackloaded_player1 = true;
+
+                            RestoreTrackMetadata restoreTrackMetadata = new(_dataFields);
+                            restoreTrackMetadata.SetMainSettings(_dataFields);
+                            RestoreTrackMetadataModel = restoreTrackMetadata.GetSettings(_dataFields.RestoreTrackspath);
                         }
                     }
                 }
@@ -555,6 +585,11 @@ namespace TrackMaster.Services.Sniffy
                             _tracklisthubContext.Clients.All.SendAsync("PlayerTwo", 10, _dataFields.Genre2);
 
                             trackloaded_player2 = true;
+
+                            RestoreTrackMetadata restoreTrackMetadata = new(_dataFields);
+                            
+                            restoreTrackMetadata.SetMainSettings(_dataFields);
+                            RestoreTrackMetadataModel = restoreTrackMetadata.GetSettings(_dataFields.RestoreTrackspath);
                         }
                     }
                 }
@@ -701,12 +736,12 @@ namespace TrackMaster.Services.Sniffy
         {
             if (e.Player1)
             {
-                _tracklisthubContext.Clients.All.SendAsync("NowPlaying", _dataFields.Trackartist1, _dataFields.Tracktitle1, _dataFields.Albumartid1);
+                _tracklisthubContext.Clients.All.SendAsync("NowPlaying", _dataFields.Trackartist1, _dataFields.Tracktitle1, _dataFields.Albumartid1, _dataFields.ShowArtwork);
                 TrackHistory(_dataFields.Trackpath);
             }
             if (e.Player2)
             {
-                _tracklisthubContext.Clients.All.SendAsync("NowPlaying", _dataFields.Trackartist2, _dataFields.Tracktitle2, _dataFields.Albumartid2);
+                _tracklisthubContext.Clients.All.SendAsync("NowPlaying", _dataFields.Trackartist2, _dataFields.Tracktitle2, _dataFields.Albumartid2, _dataFields.ShowArtwork);
                 TrackHistory(_dataFields.Trackpath2);
             } 
         }
@@ -739,6 +774,24 @@ namespace TrackMaster.Services.Sniffy
             {
                 AssemblyInformationalVersionAttribute infoVersion = (AssemblyInformationalVersionAttribute)Assembly.GetExecutingAssembly().GetCustomAttributes(typeof(AssemblyInformationalVersionAttribute), false).FirstOrDefault();
                 return infoVersion.InformationalVersion;
+            }
+        }
+
+        private RestoreTrackMetadataModel GetSetRestoreTrackMetadata()
+        {
+            RestoreTrackMetadata restoreTrackMetadata = new(_dataFields);
+
+            if (HybridSupport.IsElectronActive)
+            {
+                string path = Electron.App.GetPathAsync(PathName.UserData).Result;
+                _dataFields.RestoreTrackspath = path + @"\TrackMetadata.json";
+                return restoreTrackMetadata.GetSettings(_dataFields.RestoreTrackspath);
+            }
+            else
+            {
+                var appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+                _dataFields.RestoreTrackspath = appDataPath + @"\Electron\TrackMetadata.json";
+                return restoreTrackMetadata.GetSettings(_dataFields.RestoreTrackspath);
             }
         }
     }

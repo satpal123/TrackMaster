@@ -38,10 +38,7 @@ namespace TrackMaster.Services.TwitchServices
 
         public TwitchBot(IHubContext<TrackistHub> synchub, ILogger<TwitchBot> logger, DataFields dataFields)
         {
-            if (_instance == null)
-            {
-                _instance = this;
-            }
+            _instance ??= this;
             _tracklisthubContext = synchub;
             _dataFields = dataFields;
             _logger = logger;            
@@ -51,7 +48,7 @@ namespace TrackMaster.Services.TwitchServices
         {
             _logger.LogInformation("TwitchBot Service is Starting");
 
-            _timer = new Timer(DoWork, null, TimeSpan.Zero, TimeSpan.FromSeconds(10));
+            _timer = new Timer(DoWork, null, TimeSpan.Zero, TimeSpan.FromSeconds(20));
             
             return Task.CompletedTask;
         }
