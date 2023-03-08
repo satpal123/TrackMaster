@@ -10,6 +10,8 @@ Features:
  - Displays realtime tracks playing on Deck 1 or Deck 2
  - Track Information is displayed on screen as overlay and also can be configured with bot command to display in Chat (Currently only works in Twitch)
  - More features will be added soon.
+ 
+ ![image](https://user-images.githubusercontent.com/710270/223614075-5ad7017c-09f5-4201-a571-6ddb54530025.png)
 
 Installation:
   - Download the current release (Currently only Windows 10/11 is supported).
