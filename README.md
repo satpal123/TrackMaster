@@ -17,4 +17,6 @@ Installation:
 
 If you like to have new features, then please open an issue describing the required feature.
 
+For further discussion join the discord channel https://discord.gg/MnfEcTyR29
+
 
