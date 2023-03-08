@@ -1,6 +1,6 @@
 # TrackMaster
 
-![image](https://user-images.githubusercontent.com/710270/223608177-cf462106-2937-4fa0-91e6-7bc0229f4958.png)
+![223608177-cf462106-2937-4fa0-91e6-7bc0229f4958](https://user-images.githubusercontent.com/710270/223614262-674afbd4-182a-410c-b975-4e51064401e6.png)
 
 TrackMaster gives you the ability to get current tracks playing on the XDJ-RX1 and RX2. 
 
