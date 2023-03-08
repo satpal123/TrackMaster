@@ -1,1 +1,20 @@
-TrackMaster
+# TrackMaster
+
+![image](https://user-images.githubusercontent.com/710270/223608177-cf462106-2937-4fa0-91e6-7bc0229f4958.png)
+
+TrackMaster gives you the ability to get current tracks playing on the XDJ-RX1 and RX2. 
+
+**Please note: This only works with ReckordBox in Link mode only.**
+
+Features:
+ - Displays realtime tracks playing on Deck 1 or Deck 2
+ - Track Information is displayed on screen as overlay and also can be configured with bot command to display in Chat (Currently only works in Twitch)
+ - More features will be added soon.
+
+Installation:
+  - Download the current release (Currently only Windows 10/11 is supported).
+  - Download Npcap (https://npcap.com/dist/). 
+
+If you like to have new features, then please open an issue describing the required feature.
+
+
