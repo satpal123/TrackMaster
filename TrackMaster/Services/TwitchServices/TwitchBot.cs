@@ -17,8 +17,7 @@ using TwitchLib.Communication.Models;
 
 namespace TrackMaster.Services.TwitchServices
 {
-    public interface ITimerHostedService : IHostedService {}
-    public class TwitchBot : ITimerHostedService
+    public class TwitchBot : IHostedService
     {
         private TwitchClient client;
         private readonly IHubContext<TrackistHub> _tracklisthubContext;
@@ -28,7 +27,6 @@ namespace TrackMaster.Services.TwitchServices
         private readonly ILogger _logger;
         private Timer _timer;
         private readonly DataFields _dataFields;
-
 
         private static TwitchBot _instance;
 
@@ -46,10 +44,12 @@ namespace TrackMaster.Services.TwitchServices
         {
             _logger.LogInformation("TwitchBot Service is Starting");
 
-            DoWork();
-
-            _timer = new Timer(CheckStatus, null, TimeSpan.Zero, TimeSpan.FromSeconds(20));
-
+            Task.Run(async () =>
+            {
+                await DoWork(cancellationToken);
+               
+            }, cancellationToken);
+            _timer = new Timer(CheckStatus, null, TimeSpan.Zero, TimeSpan.FromSeconds(5));
             return Task.CompletedTask;
         }
 
@@ -59,9 +59,17 @@ namespace TrackMaster.Services.TwitchServices
             {
                 _tracklisthubContext.Clients.All.SendAsync("DeviceAndTwitchStatus", 2, "Connected to Twitch Bot!");
             }
+            else
+            {
+                Task.Run(async () =>
+                {
+                    await DoWork(state);
+
+                });
+            }
         }
 
-        private async void DoWork()
+        private async Task DoWork(object state)
         {
             _logger.LogInformation("Timed Background Service is working.");
 
@@ -96,22 +104,23 @@ namespace TrackMaster.Services.TwitchServices
                 if (string.IsNullOrEmpty(_twitchUsername) || string.IsNullOrEmpty(_twitchPassword))
                     throw new ArgumentException();
 
-                ConnectionCredentials credentials = new(_twitchUsername, _twitchPassword);
-                var clientOptions = new ClientOptions
-                {
-                    MessagesAllowedInPeriod = 750,
-                    ThrottlingPeriod = TimeSpan.FromSeconds(30)
-                };
-                WebSocketClient customClient = new(clientOptions);
-                client = new TwitchClient(customClient);
-                client.Initialize(credentials, _twitchChannel);
-                client.OnMessageReceived += Client_OnMessageReceived;
-                client.OnConnectionError += Client_OnConnectionError;
-                client.OnIncorrectLogin += Client_OnIncorrectLogin;
-                client.OnConnected += Client_OnConnected;
-                client.OnJoinedChannel += Client_OnJoinedChannel;
-                client.Connect();
-
+                await Task.Run(() => {
+                    ConnectionCredentials credentials = new(_twitchUsername, _twitchPassword);
+                    var clientOptions = new ClientOptions
+                    {
+                        MessagesAllowedInPeriod = 750,
+                        ThrottlingPeriod = TimeSpan.FromSeconds(30)
+                    };
+                    WebSocketClient customClient = new(clientOptions);
+                    client = new TwitchClient(customClient);
+                    client.Initialize(credentials, _twitchChannel);
+                    client.OnMessageReceived += Client_OnMessageReceived;
+                    client.OnConnectionError += Client_OnConnectionError;
+                    client.OnIncorrectLogin += Client_OnIncorrectLogin;
+                    client.OnConnected += Client_OnConnected;
+                    client.OnJoinedChannel += Client_OnJoinedChannel;
+                    client.Connect();
+                });
             }
             catch (Exception ex)
             {
@@ -174,6 +183,8 @@ namespace TrackMaster.Services.TwitchServices
             if (HybridSupport.IsElectronActive)
             {
                 string path = await Electron.App.GetPathAsync(PathName.UserData);
+
+                Console.WriteLine("Twitch: " + path);
                 _dataFields.Appfullpath = path + @"\Settings.json";
                 return settingsHelper.GetSettings(_dataFields.Appfullpath);
             }

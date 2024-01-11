@@ -32,19 +32,23 @@ namespace TrackMaster
         {
             services.AddControllersWithViews();
             services.AddSignalR();
+            services.AddElectron();
             services.AddSingleton(Configuration);            
             services.AddSingleton<IHostedService, Sniffy>();
             services.AddSingleton<DataFieldsInstance>();
-            services.AddSingleton<DiscordBot>();
             services.AddSingleton<TwitchBot>();
-            services.AddSingleton<Services.TwitchServices.ITimerHostedService, TwitchBot>(serviceProvider =>
+            services.AddSingleton<DiscordBot>();
+            services.AddSingleton<IHostedService, TwitchBot>(serviceProvider =>
             {
                 return TwitchBot.Instance;
             });
-            services.AddSingleton<Services.DiscordServices.ITimerHostedService, DiscordBot>(serviceProvider =>
+            services.AddSingleton<IHostedService, DiscordBot>(serviceProvider =>
             {
                 return DiscordBot.Instance;
             });
+            services.AddHostedService<TwitchBot>();
+            services.AddHostedService<DiscordBot>();   
+
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -73,20 +77,20 @@ namespace TrackMaster
             });
 
             Task.Run(async () =>
-            {  
+            {
                 var browserWindowOptions = new BrowserWindowOptions
                 {
                     WebPreferences = new WebPreferences
                     {
                         NodeIntegration = false
-                    }
+                    },
+                    Center = true,
+                    Height = 880,
+                    Width = 1450,
+                    AutoHideMenuBar = true,
+                    Resizable = true,
+                    HasShadow = true
                 };
-                browserWindowOptions.Center = true;
-                browserWindowOptions.Height = 880;
-                browserWindowOptions.Width = 1450;     
-                browserWindowOptions.AutoHideMenuBar = true;
-                browserWindowOptions.Resizable = true;
-                browserWindowOptions.HasShadow = true;
 
                 var browserWindow = await Electron.WindowManager.CreateWindowAsync(browserWindowOptions);
                 browserWindow.Show();

@@ -34,8 +34,8 @@ namespace TrackMaster
             .UseSerilog()
             .ConfigureServices(services =>
                 {                    
-                    services.AddHostedService<TwitchBot>(); //Connect to Twitch               
-                    services.AddHostedService<DiscordBot>(); //Connect to Discord Channel
+                    //services.AddHostedService<TwitchBot>(); //Connect to Twitch               
+                    //services.AddHostedService<DiscordBot>(); //Connect to Discord Channel
                     //Add more services to connect to here and create a service class under services.
                     services.AddHostedService<Sniffy>();
                     services.AddSingleton<DataFields>();
