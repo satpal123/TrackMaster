@@ -20,7 +20,10 @@ namespace TrackMaster.Controllers
         public IActionResult Index()
         {
             ViewBag.ControllerFound = _dataFields.ControllerFound;
-            ViewBag.BotManuallyStopped = _dataFields.BotManuallyStopped;
+            ViewBag.TwitchBotManuallyStopped = _dataFields.TwitchBotManuallyStopped;
+            ViewBag.DiscordBotManuallyStopped = _dataFields.DiscordBotManuallyStopped;
+            ViewBag.IsConnectedTwitch = _dataFields.IsConnectedTwitch;
+            ViewBag.IsConnectedDiscord = _dataFields.IsConnectedDiscord;
 
             return View();
         }

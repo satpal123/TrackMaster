@@ -7,6 +7,9 @@ namespace TrackMaster.Models
         [JsonPropertyName("TwitchCredentials")]
         public TwitchCredentialsModel TwitchCredentials { get; set; }
 
+        [JsonPropertyName("DiscordCredentials")]
+        public DiscordCredentialsModel DiscordCredentials { get; set; }
+
         [JsonPropertyName("OverlaySettings")]
         public OverlaySettingsModel OverlaySettings { get; set; }
     }

@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using System.IO;
+﻿using System.IO;
 using System.Text.Json;
 using TrackMaster.Models;
 
@@ -15,35 +14,52 @@ namespace TrackMaster.Helper
             _dataFields = dataFields;
         }
 
-        public TwitchCredentialsModel SetMainSettings(TwitchCredentialsModel TwitchCredentials, OverlaySettingsModel OverlaySettings)
+        public MainSettingsModel SetMainSettings(TwitchCredentialsModel TwitchCredentials, OverlaySettingsModel OverlaySettings, 
+            DiscordCredentialsModel DiscordCredentials)
         {
             var options = new JsonSerializerOptions
             {
                 WriteIndented = true
             };
 
-            TwitchCredentials = new TwitchCredentialsModel
+            if (TwitchCredentials != null)
             {
-                Username = TwitchCredentials.Username,
-                Password = TwitchCredentials.Password,
-                Channel = TwitchCredentials.Channel
-            };
+                TwitchCredentials = new TwitchCredentialsModel
+                {
+                    Username = TwitchCredentials.Username,
+                    Password = TwitchCredentials.Password,
+                    Channel = TwitchCredentials.Channel
+                };
+            }           
 
-            OverlaySettings = new OverlaySettingsModel
+            if (DiscordCredentials != null )
             {
-                DisplayAlbumArt = OverlaySettings.DisplayAlbumArt,
-            };
+                DiscordCredentials = new DiscordCredentialsModel
+                {
+                    ChannelId = DiscordCredentials.ChannelId,
+                    DiscordToken = DiscordCredentials.DiscordToken
+                };
+            }
+
+            if (OverlaySettings!= null)
+            {
+                OverlaySettings = new OverlaySettingsModel
+                {
+                    DisplayAlbumArt = OverlaySettings.DisplayAlbumArt,
+                };
+            }
 
             MainSettingsModel mainSettingsModel = new()
             {
                 TwitchCredentials = TwitchCredentials,
-                OverlaySettings = OverlaySettings
+                OverlaySettings = OverlaySettings,
+                DiscordCredentials = DiscordCredentials
             };
 
             filecontent = JsonSerializer.Serialize(mainSettingsModel, options);
             File.WriteAllText(_dataFields.Appfullpath, filecontent);
 
-            return TwitchCredentials;
+            return mainSettingsModel;
         }       
 
         public MainSettingsModel GetSettings(string settingsPath)

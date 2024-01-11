@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Serilog;
 using TrackMaster.Helper;
+using TrackMaster.Services.DiscordServices;
 using TrackMaster.Services.Sniffy;
 using TrackMaster.Services.TwitchServices;
 
@@ -34,6 +35,7 @@ namespace TrackMaster
             .ConfigureServices(services =>
                 {                    
                     services.AddHostedService<TwitchBot>(); //Connect to Twitch               
+                    services.AddHostedService<DiscordBot>(); //Connect to Discord Channel
                     //Add more services to connect to here and create a service class under services.
                     services.AddHostedService<Sniffy>();
                     services.AddSingleton<DataFields>();

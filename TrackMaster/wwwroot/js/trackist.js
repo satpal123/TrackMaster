@@ -152,6 +152,7 @@ connection.on("PlayerTwo", function (_id, message) {
 });
 
 connection.on("DeviceAndTwitchStatus", function (_id, message) {
+    console.log(message);
     switch (_id) {
         case 1:
             $("#loading").hide();
@@ -165,6 +166,10 @@ connection.on("DeviceAndTwitchStatus", function (_id, message) {
             $('#ethernet-device').text(message);  
             $("#loading").show();
             $("#playerinfo").hide();
+            break;
+        case 4:
+            $('#discord-status').text(message);
+            console.log(message);
             break;
     }
 });
