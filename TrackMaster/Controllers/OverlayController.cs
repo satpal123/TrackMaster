@@ -38,13 +38,16 @@ namespace TrackMaster.Controllers
             {
                 SettingsHelper settingsHelper = new(_dataFields);
 
-                MainSettingsModel = settingsHelper.GetSettings(_dataFields.Appfullpath);
-                settingsHelper.SetMainSettings(MainSettingsModel.TwitchCredentials, overlaySettingsModel, MainSettingsModel.DiscordCredentials);
-                _dataFields.ShowArtwork = overlaySettingsModel.DisplayAlbumArt;
+                if (_dataFields.Appfullpath != null)
+                {
+                    MainSettingsModel = settingsHelper.GetSettings(_dataFields.Appfullpath);
+                    settingsHelper.SetMainSettings(MainSettingsModel.TwitchCredentials, overlaySettingsModel, MainSettingsModel.DiscordCredentials);
+                    _dataFields.ShowArtwork = overlaySettingsModel.DisplayAlbumArt;
 
-                _tracklisthubContext.Clients.All.SendAsync("Overlay", overlaySettingsModel.DisplayAlbumArt);
+                    _tracklisthubContext.Clients.All.SendAsync("Overlay", overlaySettingsModel.DisplayAlbumArt);
 
-                _dataFields.IsConnectedTwitch = false;
+                    _dataFields.IsConnectedTwitch = false;
+                }
             }
 
             return Json(new { title = "Notification", message = "Settings saved!", result = overlaySettingsModel });

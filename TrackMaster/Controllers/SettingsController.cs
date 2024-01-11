@@ -4,8 +4,8 @@ using System.Threading.Tasks;
 using TrackMaster.Helper;
 using TrackMaster.Hubs;
 using TrackMaster.Models;
-using ITimerHostedServiceDiscord = TrackMaster.Services.DiscordServices.ITimerHostedService;
-using ITimerHostedServiceTwitch = TrackMaster.Services.TwitchServices.ITimerHostedService;
+using TrackMaster.Services.DiscordServices;
+using TrackMaster.Services.TwitchServices;
 
 namespace TrackMaster.Controllers
 {
@@ -13,11 +13,11 @@ namespace TrackMaster.Controllers
     {
         private MainSettingsModel MainSettingsModel;
         private readonly DataFields _dataFields;
-        private readonly ITimerHostedServiceTwitch _hostedTwitchService;
-        private readonly ITimerHostedServiceDiscord _hostedDiscordService;
+        private readonly TwitchBot _hostedTwitchService;
+        private readonly DiscordBot _hostedDiscordService;
         private readonly IHubContext<TrackistHub> _tracklisthubContext;
 
-        public SettingsController(ITimerHostedServiceTwitch hostedTwitchService, ITimerHostedServiceDiscord hostedDiscordService, 
+        public SettingsController(TwitchBot hostedTwitchService, DiscordBot hostedDiscordService, 
             DataFields dataFields, IHubContext<TrackistHub> synchub)
         {
             _hostedTwitchService = hostedTwitchService;
@@ -68,10 +68,13 @@ namespace TrackMaster.Controllers
             {                
                 SettingsHelper settingsHelper = new(_dataFields);
 
-                MainSettingsModel = settingsHelper.GetSettings(_dataFields.Appfullpath);
-                settingsHelper.SetMainSettings(mainSettingsModel.TwitchCredentials, MainSettingsModel.OverlaySettings, MainSettingsModel.DiscordCredentials);
+                if(_dataFields.Appfullpath != null)
+                {
+                    MainSettingsModel = settingsHelper.GetSettings(_dataFields.Appfullpath);
+                    settingsHelper.SetMainSettings(mainSettingsModel.TwitchCredentials, MainSettingsModel.OverlaySettings, MainSettingsModel.DiscordCredentials);
 
-                _dataFields.IsConnectedTwitch = false;
+                    _dataFields.IsConnectedTwitch = false;
+                }
             }
 
             return Json(new { title = "Notification", message = "Twitch Settings saved!", result = mainSettingsModel });
@@ -85,10 +88,14 @@ namespace TrackMaster.Controllers
             {
                 SettingsHelper settingsHelper = new(_dataFields);
 
-                MainSettingsModel = settingsHelper.GetSettings(_dataFields.Appfullpath);
-                settingsHelper.SetMainSettings(MainSettingsModel.TwitchCredentials, MainSettingsModel.OverlaySettings, mainSettingsModel.DiscordCredentials);
+                if (_dataFields.Appfullpath != null)
+                {
+                    MainSettingsModel = settingsHelper.GetSettings(_dataFields.Appfullpath);
+                    settingsHelper.SetMainSettings(MainSettingsModel.TwitchCredentials, MainSettingsModel.OverlaySettings, mainSettingsModel.DiscordCredentials);
 
-                _dataFields.IsConnectedDiscord = false;
+                    _dataFields.IsConnectedDiscord = false;
+                }
+                    
             }
 
             return Json(new { title = "Notification", message = "Discord Settings saved!", result = mainSettingsModel });

@@ -13,9 +13,8 @@ using TrackMaster.Hubs;
 using TrackMaster.Models;
 
 namespace TrackMaster.Services.DiscordServices
-{
-    public interface ITimerHostedService : IHostedService {}
-    public class DiscordBot : ITimerHostedService
+{   
+    public class DiscordBot : IHostedService
     {
         private DiscordSocketClient client;
         private readonly IHubContext<TrackistHub> _tracklisthubContext;
@@ -26,7 +25,6 @@ namespace TrackMaster.Services.DiscordServices
         private readonly DataFields _dataFields;
 
         private static DiscordBot _instance;
-
         public static DiscordBot Instance => _instance;
 
         public DiscordBot(IHubContext<TrackistHub> synchub, ILogger<DiscordBot> logger, DataFields dataFields)
@@ -41,9 +39,13 @@ namespace TrackMaster.Services.DiscordServices
         {
             _logger.LogInformation("DiscordBot Service is Starting");
 
-            DoWork();
+            Task.Run(async () =>
+            {
+                await DoWork(cancellationToken);
 
-            _timer = new Timer(CheckStatus, null, TimeSpan.Zero, TimeSpan.FromSeconds(20));
+            }, cancellationToken);
+
+            _timer = new Timer(CheckStatus, null, TimeSpan.Zero, TimeSpan.FromSeconds(5));
 
             return Task.CompletedTask;
         }
@@ -54,9 +56,17 @@ namespace TrackMaster.Services.DiscordServices
             {
                 _tracklisthubContext.Clients.All.SendAsync("DeviceAndTwitchStatus", 4, "Connected to Discord Bot!");
             }
+            else
+            {
+                Task.Run(async () =>
+                {
+                    await DoWork(state);
+
+                });
+            }
         }
 
-        private async void DoWork()
+        private async Task DoWork(object state)
         {
             _logger.LogInformation("Timed Background Service is working.");
 
@@ -96,7 +106,7 @@ namespace TrackMaster.Services.DiscordServices
 
                     return Task.CompletedTask;
                 };
-                await Task.Delay(-1);
+                //await Task.Delay(-1);
             }
             catch (Exception ex)
             {
@@ -125,7 +135,7 @@ namespace TrackMaster.Services.DiscordServices
             return Task.CompletedTask;
         }
 
-        public async Task SendMessageToDiscord(string message)
+        public async void SendMessageToDiscord(string message)
         {
             var channel = client.GetChannel(_discordChannelId) as ITextChannel;
             await channel.SendMessageAsync(message, false, flags: MessageFlags.SuppressNotification);
@@ -138,6 +148,7 @@ namespace TrackMaster.Services.DiscordServices
             if (HybridSupport.IsElectronActive)
             {
                 string path = await Electron.App.GetPathAsync(PathName.UserData);
+                Console.WriteLine("Discord: " + path);
                 _dataFields.Appfullpath = path + @"\Settings.json";
                 return settingsHelper.GetSettings(_dataFields.Appfullpath);
             }
