@@ -17,79 +17,80 @@ using TwitchLib.Communication.Models;
 
 namespace TrackMaster.Services.TwitchServices
 {
-    public interface ITimerHostedService : IHostedService
-    {
-
-    }
+    public interface ITimerHostedService : IHostedService {}
     public class TwitchBot : ITimerHostedService
     {
-        TwitchClient client;
+        private TwitchClient client;
         private readonly IHubContext<TrackistHub> _tracklisthubContext;
         private string _twitchUsername;
         private string _twitchPassword;
         private string _twitchChannel;
         private readonly ILogger _logger;
-        private static Timer _timer;
+        private Timer _timer;
         private readonly DataFields _dataFields;
+
 
         private static TwitchBot _instance;
 
-        public static TwitchBot Instance => _instance;       
+        public static TwitchBot Instance => _instance;
 
         public TwitchBot(IHubContext<TrackistHub> synchub, ILogger<TwitchBot> logger, DataFields dataFields)
         {
             _instance ??= this;
             _tracklisthubContext = synchub;
             _dataFields = dataFields;
-            _logger = logger;            
+            _logger = logger;
         }
 
         public Task StartAsync(CancellationToken cancellationToken)
         {
             _logger.LogInformation("TwitchBot Service is Starting");
 
-            _timer = new Timer(DoWork, null, TimeSpan.Zero, TimeSpan.FromSeconds(20));
-            
+            DoWork();
+
+            _timer = new Timer(CheckStatus, null, TimeSpan.Zero, TimeSpan.FromSeconds(20));
+
             return Task.CompletedTask;
         }
 
-        private async void DoWork(object state)
+        private void CheckStatus(object state)
+        {
+            if(_dataFields.IsConnectedTwitch)
+            {
+                _tracklisthubContext.Clients.All.SendAsync("DeviceAndTwitchStatus", 2, "Connected to Twitch Bot!");
+            }
+        }
+
+        private async void DoWork()
         {
             _logger.LogInformation("Timed Background Service is working.");
 
-            if(_dataFields.BotManuallyStopped == false)
+            if (!_dataFields.IsConnectedTwitch)
             {
-                if (!_dataFields.IsConnected)
-                {
-                    var result = await GetSetTwitchCredentials();
+                var result = await GetSetTwitchCredentials();
 
-                    if (result.TwitchCredentials != null)
-                    {
-                        _twitchUsername = result.TwitchCredentials.Username;
-                        _twitchPassword = result.TwitchCredentials.Password;
-                        _twitchChannel = result.TwitchCredentials.Channel;
-
-                        await Bot();
-                    }
-                }
-                else
+                if (result.TwitchCredentials != null)
                 {
-                    await _tracklisthubContext.Clients.All.SendAsync("DeviceAndTwitchStatus", 2, "Connected to Twitch Bot!");
+                    _twitchUsername = result.TwitchCredentials.Username;
+                    _twitchPassword = result.TwitchCredentials.Password;
+                    _twitchChannel = result.TwitchCredentials.Channel;
+
+                    await Bot();
                 }
             }
         }
 
         public Task StopAsync(CancellationToken cancellationToken)
         {
-            _dataFields.IsConnected = false;
-            _dataFields.BotManuallyStopped = true;
+            _dataFields.IsConnectedTwitch = false;
+            _dataFields.TwitchBotManuallyStopped = true;
             client.Disconnect();
             _logger.LogError("TwitchBot Service is Stopping");
             return Task.CompletedTask;
         }
 
         private async Task Bot()
-        { 
+        {
             try
             {
                 if (string.IsNullOrEmpty(_twitchUsername) || string.IsNullOrEmpty(_twitchPassword))
@@ -105,9 +106,10 @@ namespace TrackMaster.Services.TwitchServices
                 client = new TwitchClient(customClient);
                 client.Initialize(credentials, _twitchChannel);
                 client.OnMessageReceived += Client_OnMessageReceived;
-                client.OnConnected += Client_OnConnected;
                 client.OnConnectionError += Client_OnConnectionError;
                 client.OnIncorrectLogin += Client_OnIncorrectLogin;
+                client.OnConnected += Client_OnConnected;
+                client.OnJoinedChannel += Client_OnJoinedChannel;
                 client.Connect();
 
             }
@@ -116,8 +118,13 @@ namespace TrackMaster.Services.TwitchServices
                 Console.WriteLine("Twitch Bot not configured! ");
                 _logger.LogError("Twitch Bot not configured!" + ex.Message);
                 await _tracklisthubContext.Clients.All.SendAsync("DeviceAndTwitchStatus", 2, ex.Message);
-                _dataFields.IsConnected = false;
-            }            
+                _dataFields.IsConnectedTwitch = false;
+            }
+        }
+
+        private void Client_OnJoinedChannel(object sender, OnJoinedChannelArgs e)
+        {
+            _tracklisthubContext.Clients.All.SendAsync("ReceiveMessage", "twitch", $"Connected to {e.Channel}");
         }
 
         private void Client_OnIncorrectLogin(object sender, OnIncorrectLoginArgs e)
@@ -136,8 +143,11 @@ namespace TrackMaster.Services.TwitchServices
 
         private void Client_OnConnected(object sender, OnConnectedArgs e)
         {
-            _dataFields.IsConnected = true;
-            _tracklisthubContext.Clients.All.SendAsync("ReceiveMessage", "twitch", $"Connected to {e.AutoJoinChannel}");            
+            if (!_dataFields.TwitchBotManuallyStopped)
+            {
+                _dataFields.IsConnectedTwitch = true;
+                _tracklisthubContext.Clients.All.SendAsync("DeviceAndTwitchStatus", 2, "Connected to Twitch Bot!");
+            }
         }
 
         private void Client_OnMessageReceived(object sender, OnMessageReceivedArgs e)
@@ -149,6 +159,12 @@ namespace TrackMaster.Services.TwitchServices
 
             if (e.ChatMessage.Message == "!last3tr")
                 client.SendMessage(e.ChatMessage.Channel, mixStatus.TrackHistory());
+        }
+
+        public void CurrentTrackPlaying(string message)
+        {
+            MixStatus mixStatus = new(_dataFields);
+            client.SendMessage(_twitchChannel, mixStatus.Mixstatus());
         }
 
         private async Task<MainSettingsModel> GetSetTwitchCredentials()

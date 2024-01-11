@@ -27,8 +27,10 @@ namespace TrackMaster.Helper
         public List<string> TrackList { get; set; } = new List<string>();
         public bool Player1a { get; set; } = false;
         public bool Player2a { get; set; } = false;
-        public bool IsConnected { get; set; }
-        public bool BotManuallyStopped { get; set; }
+        public bool IsConnectedTwitch { get; set; }
+        public bool IsConnectedDiscord { get; set; }
+        public bool TwitchBotManuallyStopped { get; set; }
+        public bool DiscordBotManuallyStopped { get; set; }
         public bool ShowArtwork { get; set; }
 
         //Metadata Related Data Fields

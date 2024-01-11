@@ -8,6 +8,7 @@ using Microsoft.Extensions.Hosting;
 using System.Threading.Tasks;
 using TrackMaster.Helper;
 using TrackMaster.Hubs;
+using TrackMaster.Services.DiscordServices;
 using TrackMaster.Services.Sniffy;
 using TrackMaster.Services.TwitchServices;
 
@@ -34,9 +35,15 @@ namespace TrackMaster
             services.AddSingleton(Configuration);            
             services.AddSingleton<IHostedService, Sniffy>();
             services.AddSingleton<DataFieldsInstance>();
-            services.AddSingleton<ITimerHostedService, TwitchBot>(serviceProvider =>
+            services.AddSingleton<DiscordBot>();
+            services.AddSingleton<TwitchBot>();
+            services.AddSingleton<Services.TwitchServices.ITimerHostedService, TwitchBot>(serviceProvider =>
             {
                 return TwitchBot.Instance;
+            });
+            services.AddSingleton<Services.DiscordServices.ITimerHostedService, DiscordBot>(serviceProvider =>
+            {
+                return DiscordBot.Instance;
             });
         }
 

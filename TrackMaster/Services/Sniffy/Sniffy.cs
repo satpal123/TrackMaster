@@ -21,6 +21,8 @@ using System.Threading.Tasks;
 using TrackMaster.Helper;
 using TrackMaster.Hubs;
 using TrackMaster.Models;
+using TrackMaster.Services.DiscordServices;
+using TrackMaster.Services.TwitchServices;
 
 namespace TrackMaster.Services.Sniffy
 {
@@ -28,6 +30,8 @@ namespace TrackMaster.Services.Sniffy
     {
         #region Variable declarations
         private readonly IHubContext<TrackistHub> _tracklisthubContext;
+        private readonly DiscordBot _discordBot;
+        private readonly TwitchBot _twitchBot;
 
         private readonly string _ethernetdevice;
         private readonly string _controllerIP;
@@ -56,13 +60,16 @@ namespace TrackMaster.Services.Sniffy
         private RestoreTrackMetadataModel RestoreTrackMetadataModel;
 
         #endregion
-        public Sniffy(IConfiguration configuration, IHubContext<TrackistHub> synchub, ILogger<Sniffy> logger, DataFields dataFields)
+        public Sniffy(IConfiguration configuration, IHubContext<TrackistHub> synchub, ILogger<Sniffy> logger, DataFields dataFields,
+            DiscordBot discordBot, TwitchBot twitchBot)
         {
             _tracklisthubContext = synchub;
             _ethernetdevice = configuration.GetSection("EthernetDevice").Value;
             _controllerIP = configuration.GetSection("ControllerIP").Value;
             _dataFields = dataFields;
             _logger = logger;
+            _discordBot = discordBot;
+            _twitchBot = twitchBot;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -738,11 +745,18 @@ namespace TrackMaster.Services.Sniffy
             {
                 _tracklisthubContext.Clients.All.SendAsync("NowPlaying", _dataFields.Trackartist1, _dataFields.Tracktitle1, _dataFields.Albumartid1, _dataFields.ShowArtwork);
                 TrackHistory(_dataFields.Trackpath);
+
+                _discordBot.SendMessageToDiscord(string.Join(@"{0} - {1}", _dataFields.Trackartist1, _dataFields.Tracktitle1)).Wait();
+                _twitchBot.CurrentTrackPlaying(string.Join(@"{0} - {1}", _dataFields.Trackartist1, _dataFields.Tracktitle1));
+                
             }
             if (e.Player2)
             {
                 _tracklisthubContext.Clients.All.SendAsync("NowPlaying", _dataFields.Trackartist2, _dataFields.Tracktitle2, _dataFields.Albumartid2, _dataFields.ShowArtwork);
                 TrackHistory(_dataFields.Trackpath2);
+
+                _discordBot.SendMessageToDiscord(string.Join(@"{0} - {1}", _dataFields.Trackartist2, _dataFields.Tracktitle2)).Wait();
+                _twitchBot.CurrentTrackPlaying(string.Join(@"{0} - {1}", _dataFields.Trackartist2, _dataFields.Tracktitle2));
             } 
         }
 

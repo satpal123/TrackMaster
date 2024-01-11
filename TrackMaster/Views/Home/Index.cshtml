@@ -4,8 +4,20 @@
 
 @section scripts{
     <script>
-        if ('@ViewBag.BotManuallyStopped' == 'True') {     
+        if ('@ViewBag.TwitchBotManuallyStopped' == 'True') {     
             $("#twitch-status").text("Twitch Bot is Stopped manually");
+        }
+
+        if ('@ViewBag.DiscordBotManuallyStopped' == 'True') {     
+            $("#discord-status").text("Discord Bot is Stopped manually");
+        }
+
+        if ('@ViewBag.IsConnectedTwitch' == 'True') {
+            $("#twitch-status").text("Connected to Twitch Bot!");
+        }
+
+        if ('@ViewBag.IsConnectedDiscord' == 'True') {
+            $("#discord-status").text("Connected to Discord Bot!");
         }
 
         if ('@ViewBag.ControllerFound' === true) {

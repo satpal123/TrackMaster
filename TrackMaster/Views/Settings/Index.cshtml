@@ -1,28 +1,47 @@
 ﻿@{
     ViewData["Title"] = "Settings";
     @await Html.PartialAsync("/Views/Shared/_ValidationScriptsPartial.cshtml")
-    @model TrackMaster.Models.TwitchCredentialsModel
+    @model TrackMaster.Models.MainSettingsModel
 }
 
 @section scripts{
     <script>
-        if ('@ViewBag.BotManuallyStopped' == 'True') {
-            $('#botstatus').bootstrapToggle('off')
+        if ('@ViewBag.TwitchBotManuallyStopped' == 'True') {
+            $('#twitchbotstatus').bootstrapToggle('off')
         }
 
-        if ('@ViewBag.BotManuallyStopped' == 'False') {
-            $('#botstatus').bootstrapToggle('on')
+        if ('@ViewBag.TwitchBotManuallyStopped' == 'False') {
+            $('#twitchbotstatus').bootstrapToggle('on')
+        }
+
+        if ('@ViewBag.DiscordBotManuallyStopped' == 'True') {
+            $('#discordbotstatus').bootstrapToggle('off')
+        }
+
+        if ('@ViewBag.DiscordBotManuallyStopped' == 'False') {
+            $('#discordbotstatus').bootstrapToggle('on')
         }
 
         $(function () {
-            $('#botstatus').change(function () {
+            $('#twitchbotstatus').change(function () {
                 $.ajax({
-                    url: '@Url.Action("StartStopBot", "Settings")',
+                    url: '@Url.Action("StartStopTwitchBot", "Settings")',
                     type: 'POST',
                     success: onSuccess
                 });
             });
         });
+
+        $(function () {
+            $('#discordbotstatus').change(function () {
+                $.ajax({
+                    url: '@Url.Action("StartStopDiscordBot", "Settings")',
+                    type: 'POST',
+                    success: onSuccess
+                });
+            });
+        });
+
         var onSuccess = function (data) {
             $('.toast').find("strong.mr-auto").html(data.title);
             $('.toast').find("div.toast-body").html(data.message);
@@ -36,11 +55,68 @@
     </script>
 }
 
-<div class="card">
+<div class="row">
+    <div class="col-6">
+        <div class="card">
+            <div class="card-header">
+                <div class="row">
+                    <div class="col-md-12 p-2">
+                        Twitch Bot Settings
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="container-fluid">
+                    <div class="row g-0">
+                        <div class="col-12">
+                            <div class="p-3 border" style="background-color:rgba(247,247,247,1)">
+                                <div class="col-md">
+                                    <form id="formsavetwitchsettings" asp-controller="Settings" asp-action="SaveTwitchSettings"
+                                          data-ajax-failure="onFailed" data-ajax-success="onSuccess"
+                                          data-ajax="true" data-ajax-method="post">
+                                        <div class="form-group">
+                                            @Html.LabelFor(p => Model.TwitchCredentials.Username)
+                                            @Html.TextBoxFor(p => Model.TwitchCredentials.Username, new { @Id = "Username", @class = "form-control", @placeholder = "Enter username" })
+                                            @Html.ValidationMessageFor(p => Model.TwitchCredentials.Username, "", new { @class = "text-danger" })
+                                            <small id="usernameHelp" class="form-text text-muted">Enter the Twitch bot username</small>
+                                        </div>
+                                        <div class="form-group">
+                                            @Html.LabelFor(p => Model.TwitchCredentials.Password)
+                                            @Html.PasswordFor(p => Model.TwitchCredentials.Password, new { @Id = "Password", @class = "form-control", @placeholder = "Enter OAuth password" })
+                                            @Html.ValidationMessageFor(p => Model.TwitchCredentials.Password, "", new { @class = "text-danger" })
+                                            <small id="inputPasswordHelp" class="form-text text-muted">Enter the password as oauth:--string--</small>
+                                            <a href="https://twitchapps.com/tmi/" target="_blank">Click here to generate your Twitch OAuth Token</a>
+
+                                        </div>
+                                        <div class="form-group">
+                                            @Html.LabelFor(p => Model.TwitchCredentials.Channel)
+                                            @Html.TextBoxFor(p => Model.TwitchCredentials.Channel, new { @Id = "Channel", @class = "form-control", @placeholder = "Enter channel name" })
+                                            @Html.ValidationMessageFor(p => Model.TwitchCredentials.Channel, "", new { @class = "text-danger" })
+                                            <small id="usernameHelp" class="form-text text-muted">Enter the twitch channel name</small>
+                                        </div>
+                                        <button type="submit" class="btn btn-primary">Save</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="p-3 border bg-light">
+                                <input id="twitchbotstatus" type="checkbox" data-toggle="toggle" data-size="sm" data-style="quick">
+                                <label class="form-label" style="padding-left:10px">Twitch Bot Turn On or Off - This will turn off the bot temporarily.</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-6">
+        <div class="card">
     <div class="card-header">
         <div class="row">
             <div class="col-md-12 p-2">
-                Twitch Bot Settings
+                Discord Bot Settings
             </div>
         </div>
     </div>
@@ -49,29 +125,21 @@
             <div class="row g-0">
                 <div class="col-12">
                     <div class="p-3 border" style="background-color:rgba(247,247,247,1)">
-                        <div class="col-md-8">
-                            <form id="formsavesettings" asp-controller="Settings" asp-action="SaveSettings"
+                        <div class="col-md">
+                            <form id="formsavediscordsettings" asp-controller="Settings" asp-action="SaveDiscordSettings"
                                   data-ajax-failure="onFailed" data-ajax-success="onSuccess"
                                   data-ajax="true" data-ajax-method="post">
                                 <div class="form-group">
-                                    @Html.LabelFor(p => Model.Username)
-                                    @Html.TextBoxFor(p => Model.Username, new { @Id = "Username", @class = "form-control", @placeholder = "Enter username" })
-                                    @Html.ValidationMessageFor(p => Model.Username, "", new { @class = "text-danger" })
-                                    <small id="usernameHelp" class="form-text text-muted">Enter the Twitch bot username</small>
+                                    @Html.LabelFor(p => Model.DiscordCredentials.ChannelId)
+                                    @Html.TextBoxFor(p => Model.DiscordCredentials.ChannelId, new { @Id = "channelid", @class = "form-control", @placeholder = "Enter Discord Channel ID" })
+                                    @Html.ValidationMessageFor(p => Model.DiscordCredentials.ChannelId, "", new { @class = "text-danger" })
+                                    <small id="channelidHelp" class="form-text text-muted">Enter the Discord bot channel ID</small>
                                 </div>
                                 <div class="form-group">
-                                    @Html.LabelFor(p => Model.Password)
-                                    @Html.PasswordFor(p => Model.Password, new { @Id = "Password", @class = "form-control", @placeholder = "Enter OAuth password" })
-                                    @Html.ValidationMessageFor(p => Model.Password, "", new { @class = "text-danger" })
-                                    <small id="inputPasswordHelp" class="form-text text-muted">Enter the password as oauth:--string--</small>
-                                    <a href="https://twitchapps.com/tmi/" target="_blank">Click here to generate your Twitch OAuth Token</a>
-
-                                </div>
-                                <div class="form-group">
-                                    @Html.LabelFor(p => Model.Channel)
-                                    @Html.TextBoxFor(p => Model.Channel, new { @Id = "Channel", @class = "form-control", @placeholder = "Enter channel name" })
-                                    @Html.ValidationMessageFor(p => Model.Channel, "", new { @class = "text-danger" })
-                                    <small id="usernameHelp" class="form-text text-muted">Enter the twitch channel name</small>
+                                    @Html.LabelFor(p => Model.DiscordCredentials.DiscordToken)
+                                    @Html.PasswordFor(p => Model.DiscordCredentials.DiscordToken, new { @Id = "Password", @class = "form-control", @placeholder = "Enter Discord token" })
+                                    @Html.ValidationMessageFor(p => Model.DiscordCredentials.DiscordToken, "", new { @class = "text-danger" })
+                                    <small id="inputtokenHelp" class="form-text text-muted">Enter the discord token</small>
                                 </div>
                                 <button type="submit" class="btn btn-primary">Save</button>
                             </form>
@@ -79,12 +147,17 @@
                     </div>
                 </div>
                 <div class="col-12">
-                    <div class="p-3 border bg-light">
-                        <input id="botstatus" type="checkbox" data-toggle="toggle" data-size="sm" data-style="quick">
-                        <label class="form-label" style="padding-left:10px">Twitch Bot Turn On or Off - This will turn off the bot temporarily.</label>
-                    </div>
+                <div class="p-3 border bg-light">
+                <input id="discordbotstatus" type="checkbox" data-toggle="toggle" data-size="sm" data-style="quick">
+                <label class="form-label" style="padding-left:10px">Discord Bot Turn On or Off - This will turn off the bot temporarily.</label>
+                </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+    </div>
+</div>
+
+
+
