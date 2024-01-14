@@ -44,12 +44,25 @@ namespace TrackMaster.Services.TwitchServices
         {
             _logger.LogInformation("TwitchBot Service is Starting");
 
+            if (_dataFields.IsConnectedTwitch)
+            {
+                _tracklisthubContext.Clients.All.SendAsync("DeviceAndTwitchStatus", 2, "Connected to Twitch Bot!");
+            }
+            else
+            {
+                Task.Run(async () =>
+                {
+                    await DoWork(cancellationToken);
+
+                });
+            }
+
             Task.Run(async () =>
             {
                 await DoWork(cancellationToken);
-               
+
             }, cancellationToken);
-            _timer = new Timer(CheckStatus, null, TimeSpan.Zero, TimeSpan.FromSeconds(5));
+            _timer = new Timer(CheckStatus, null, TimeSpan.Zero, TimeSpan.FromSeconds(10));
             return Task.CompletedTask;
         }
 
@@ -172,8 +185,10 @@ namespace TrackMaster.Services.TwitchServices
 
         public void CurrentTrackPlaying(string message)
         {
-            MixStatus mixStatus = new(_dataFields);
-            client.SendMessage(_twitchChannel, mixStatus.Mixstatus());
+            if (_dataFields.AutopostTracktoTwitch)
+            {
+                client.SendMessage(_twitchChannel, "Currently Playing: " + message);
+            }
         }
 
         private async Task<MainSettingsModel> GetSetTwitchCredentials()

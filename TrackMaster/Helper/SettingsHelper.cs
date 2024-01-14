@@ -15,7 +15,7 @@ namespace TrackMaster.Helper
         }
 
         public MainSettingsModel SetMainSettings(TwitchCredentialsModel TwitchCredentials, OverlaySettingsModel OverlaySettings, 
-            DiscordCredentialsModel DiscordCredentials)
+            DiscordCredentialsModel DiscordCredentials, OtherSettingsModel OtherSettings)
         {
             var options = new JsonSerializerOptions
             {
@@ -49,11 +49,20 @@ namespace TrackMaster.Helper
                 };
             }
 
+            if (OtherSettings != null)
+            {
+                OtherSettings = new OtherSettingsModel
+                {
+                    AutopostTracktoTwitch = OtherSettings.AutopostTracktoTwitch,
+                };
+            }
+
             MainSettingsModel mainSettingsModel = new()
             {
                 TwitchCredentials = TwitchCredentials,
                 OverlaySettings = OverlaySettings,
-                DiscordCredentials = DiscordCredentials
+                DiscordCredentials = DiscordCredentials,
+                OtherSettings = OtherSettings
             };
 
             filecontent = JsonSerializer.Serialize(mainSettingsModel, options);

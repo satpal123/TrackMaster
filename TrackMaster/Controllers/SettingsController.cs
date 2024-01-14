@@ -51,7 +51,12 @@ namespace TrackMaster.Controllers
                 discordCredentialsModel.DiscordToken = MainSettingsModel.DiscordCredentials.DiscordToken;
             }
 
-            MainSettingsModel mainSettingsModel = new MainSettingsModel
+            if (MainSettingsModel.OtherSettings != null)
+            {
+                ViewBag.AutopostTracktoTwitch = _dataFields.AutopostTracktoTwitch = MainSettingsModel.OtherSettings.AutopostTracktoTwitch;
+            }
+
+            MainSettingsModel mainSettingsModel = new()
             {
                 DiscordCredentials = discordCredentialsModel,
                 TwitchCredentials= twitchCredentialsModel
@@ -71,7 +76,7 @@ namespace TrackMaster.Controllers
                 if(_dataFields.Appfullpath != null)
                 {
                     MainSettingsModel = settingsHelper.GetSettings(_dataFields.Appfullpath);
-                    settingsHelper.SetMainSettings(mainSettingsModel.TwitchCredentials, MainSettingsModel.OverlaySettings, MainSettingsModel.DiscordCredentials);
+                    settingsHelper.SetMainSettings(mainSettingsModel.TwitchCredentials, MainSettingsModel.OverlaySettings, MainSettingsModel.DiscordCredentials, MainSettingsModel.OtherSettings);
 
                     _dataFields.IsConnectedTwitch = false;
                 }
@@ -91,7 +96,7 @@ namespace TrackMaster.Controllers
                 if (_dataFields.Appfullpath != null)
                 {
                     MainSettingsModel = settingsHelper.GetSettings(_dataFields.Appfullpath);
-                    settingsHelper.SetMainSettings(MainSettingsModel.TwitchCredentials, MainSettingsModel.OverlaySettings, mainSettingsModel.DiscordCredentials);
+                    settingsHelper.SetMainSettings(MainSettingsModel.TwitchCredentials, MainSettingsModel.OverlaySettings, mainSettingsModel.DiscordCredentials, MainSettingsModel.OtherSettings);
 
                     _dataFields.IsConnectedDiscord = false;
                 }
@@ -99,6 +104,24 @@ namespace TrackMaster.Controllers
             }
 
             return Json(new { title = "Notification", message = "Discord Settings saved!", result = mainSettingsModel });
+        }
+
+        [HttpPost]
+        public IActionResult SaveAutopostTracktoTwitchSettings(OtherSettingsModel otherSettingsModel)
+        {
+            if (ModelState.IsValid)
+            {
+                SettingsHelper settingsHelper = new(_dataFields);
+
+                if (_dataFields.Appfullpath != null)
+                {
+                    MainSettingsModel = settingsHelper.GetSettings(_dataFields.Appfullpath);
+                    settingsHelper.SetMainSettings(MainSettingsModel.TwitchCredentials, MainSettingsModel.OverlaySettings, MainSettingsModel.DiscordCredentials, otherSettingsModel);
+                    _dataFields.AutopostTracktoTwitch = otherSettingsModel.AutopostTracktoTwitch;
+                }
+            }
+
+            return Json(new { title = "Notification", message = "Settings saved!", result = otherSettingsModel });
         }
 
         [HttpPost]

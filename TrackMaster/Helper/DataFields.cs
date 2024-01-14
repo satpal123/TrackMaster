@@ -32,6 +32,7 @@ namespace TrackMaster.Helper
         public bool TwitchBotManuallyStopped { get; set; }
         public bool DiscordBotManuallyStopped { get; set; }
         public bool ShowArtwork { get; set; }
+        public bool AutopostTracktoTwitch { get; set; }
 
         //Metadata Related Data Fields
         public string Trackpath { get; set; }

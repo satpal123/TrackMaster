@@ -31,7 +31,7 @@ namespace TrackMaster.Services.Sniffy
         #region Variable declarations
         private readonly IHubContext<TrackistHub> _tracklisthubContext;
         readonly DiscordBot _discordBot;
-        TwitchBot _twitchBot;
+        readonly TwitchBot _twitchBot;
 
         private readonly string _ethernetdevice;
         private readonly string _controllerIP;
@@ -121,7 +121,7 @@ namespace TrackMaster.Services.Sniffy
         {
             OverlayChangeObserver overlayObserver = new(_dataFields);
             overlayObserver.MixStatusChanged += MixStatusChanged;
-            overlayObserver.Start();            
+            overlayObserver.Start();
         }
 
         private async Task CapturePacketsInitialAsync()
@@ -193,11 +193,12 @@ namespace TrackMaster.Services.Sniffy
                 // Print out the devices
                 foreach (var dev in devices)
                 {
-                    if (!dev.Description.Contains("loop"))
+                    if (!dev.Description.ToLower().Contains("loop") && !dev.Description.ToLower().Contains("virtual") && 
+                        !dev.Description.ToLower().Contains("miniport") && !dev.Description.ToLower().Contains("bluetooth"))
                     {
                         Console.WriteLine("{0}) {1} {2}", i, dev.Name, dev.Description);
 
-                        i = int.Parse(i.ToString());
+                       i = devices.IndexOf(dev);
 
                         await AutoConfigureAsync(i, devices);
 
@@ -740,15 +741,13 @@ namespace TrackMaster.Services.Sniffy
 
         private void MixStatusChanged(object sender, OverlayChangeObserver.MixStatusChangedEventArgs e)
         {
-            
-
             if (e.Player1)
             {
                 _tracklisthubContext.Clients.All.SendAsync("NowPlaying", _dataFields.Trackartist1, _dataFields.Tracktitle1, _dataFields.Albumartid1, _dataFields.ShowArtwork);
                 TrackHistory(_dataFields.Trackpath);
 
-                _discordBot.SendMessageToDiscord(string.Format(@"{0} - {1}", _dataFields.Trackartist1, _dataFields.Tracktitle1));
-                _twitchBot.CurrentTrackPlaying(string.Format(@"{0} - {1}", _dataFields.Trackartist1, _dataFields.Tracktitle1));
+                _discordBot.SendMessageToDiscord(_dataFields.Trackpath);
+                _twitchBot.CurrentTrackPlaying(_dataFields.Trackpath);
 
             }
             if (e.Player2)
@@ -756,8 +755,8 @@ namespace TrackMaster.Services.Sniffy
                 _tracklisthubContext.Clients.All.SendAsync("NowPlaying", _dataFields.Trackartist2, _dataFields.Tracktitle2, _dataFields.Albumartid2, _dataFields.ShowArtwork);
                 TrackHistory(_dataFields.Trackpath2);
 
-                _discordBot.SendMessageToDiscord(string.Format(@"{0} - {1}", _dataFields.Trackartist2, _dataFields.Tracktitle2));
-                _twitchBot.CurrentTrackPlaying(string.Format(@"{0} - {1}", _dataFields.Trackartist2, _dataFields.Tracktitle2));
+                _discordBot.SendMessageToDiscord(_dataFields.Trackpath2);
+                _twitchBot.CurrentTrackPlaying(_dataFields.Trackpath2);
             }
         }
 

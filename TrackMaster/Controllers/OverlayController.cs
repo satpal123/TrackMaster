@@ -41,7 +41,7 @@ namespace TrackMaster.Controllers
                 if (_dataFields.Appfullpath != null)
                 {
                     MainSettingsModel = settingsHelper.GetSettings(_dataFields.Appfullpath);
-                    settingsHelper.SetMainSettings(MainSettingsModel.TwitchCredentials, overlaySettingsModel, MainSettingsModel.DiscordCredentials);
+                    settingsHelper.SetMainSettings(MainSettingsModel.TwitchCredentials, overlaySettingsModel, MainSettingsModel.DiscordCredentials, MainSettingsModel.OtherSettings);
                     _dataFields.ShowArtwork = overlaySettingsModel.DisplayAlbumArt;
 
                     _tracklisthubContext.Clients.All.SendAsync("Overlay", overlaySettingsModel.DisplayAlbumArt);
