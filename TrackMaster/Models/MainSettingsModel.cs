@@ -12,5 +12,9 @@ namespace TrackMaster.Models
 
         [JsonPropertyName("OverlaySettings")]
         public OverlaySettingsModel OverlaySettings { get; set; }
+
+        [JsonPropertyName("OtherSettings")]
+        public OtherSettingsModel OtherSettings { get; set; }
+
     }
 }

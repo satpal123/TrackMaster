@@ -45,7 +45,7 @@ namespace TrackMaster.Services.DiscordServices
 
             }, cancellationToken);
 
-            _timer = new Timer(CheckStatus, null, TimeSpan.Zero, TimeSpan.FromSeconds(5));
+            _timer = new Timer(CheckStatus, null, TimeSpan.Zero, TimeSpan.FromSeconds(10));
 
             return Task.CompletedTask;
         }

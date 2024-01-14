@@ -79,10 +79,7 @@ namespace TrackMaster.Helper
 
         private void RaiseNetworkChanged(bool Player1, bool Player2)
         {
-            if (MixStatusChanged != null)
-            {
-                MixStatusChanged.Invoke(this, new MixStatusChangedEventArgs() { Player1 = Player1, Player2= Player2 });
-            }
+            MixStatusChanged?.Invoke(this, new MixStatusChangedEventArgs() { Player1 = Player1, Player2= Player2 });
         }
         public class MixStatusChangedEventArgs : EventArgs
         {
