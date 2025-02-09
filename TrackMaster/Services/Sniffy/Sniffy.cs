@@ -786,8 +786,12 @@ namespace TrackMaster.Services.Sniffy
         {
             public static string GetAssemblyVersion()
             {
-                AssemblyInformationalVersionAttribute infoVersion = (AssemblyInformationalVersionAttribute)Assembly.GetExecutingAssembly().GetCustomAttributes(typeof(AssemblyInformationalVersionAttribute), false).FirstOrDefault();
-                return infoVersion.InformationalVersion;
+                var version = Assembly.GetExecutingAssembly()
+                          .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?
+                          .InformationalVersion;
+
+                var match = Regex.Match(version, @"^\d+\.\d+\.\d+(-[a-zA-Z0-9]+)?").ToString();
+                return match;
             }
         }
 

@@ -1,7 +1,6 @@
-﻿using TrackMaster.Services.Sniffy;
-using System.Linq;
+﻿using System;
 using System.Collections.Generic;
-using System;
+using System.Linq;
 
 namespace TrackMaster.Helper
 {
@@ -11,6 +10,7 @@ namespace TrackMaster.Helper
         private string player2;
         private string player1_history;
         private string player2_history;
+        private string vinylplayer_history;
         private string tracksplaying;
         private string returnTrackHistory;
         private readonly DataFields _dataFields;
@@ -28,12 +28,14 @@ namespace TrackMaster.Helper
             //Player 1
             if (_dataFields.Globalplayernumber1 == 11 & _dataFields.Globalplayerfader1 == "Fader open" & _dataFields.Globalplayerstatus1 == "Player is playing normally")
             {
+                _dataFields.Vinyl = false;
                 player1 = _dataFields.Trackpath;
             }
 
             //Player 2
             if (_dataFields.Globalplayernumber2 == 12 & _dataFields.Globalplayerfader2 == "Fader open" & _dataFields.Globalplayerstatus2 == "Player is playing normally")
             {
+                _dataFields.Vinyl = false;
                 player2 = _dataFields.Trackpath2;
             }
 
@@ -49,6 +51,12 @@ namespace TrackMaster.Helper
             {
                 tracksplaying = "Deck 2 : " + player2;
             }
+
+            if (_dataFields.Vinyl)
+            {
+                tracksplaying = "Track ID -> " + _dataFields.VinylTrackPlaying;
+            }
+
             return tracksplaying;
         }
 
@@ -56,6 +64,8 @@ namespace TrackMaster.Helper
         {
             player1_history = _dataFields.Trackpath;
             player2_history = _dataFields.Trackpath2;
+            vinylplayer_history = _dataFields.VinylTrackPlaying;
+
 
             //Player 1
             if (_dataFields.Globalplayernumber1 == 11 & _dataFields.Globalplayerfader1 != "Fader open" & _dataFields.Globalplayerstatus1 != "Player is playing normally")
@@ -69,8 +79,14 @@ namespace TrackMaster.Helper
                 player2_history = null;
             }
 
+            //Vinyl
+            if (_dataFields.Vinyl)
+            {
+                vinylplayer_history = null;
+            }
+
             var trackListHistory = (from tr in _dataFields.TrackList
-                                   where tr.ToString() != player1_history & tr.ToString() != player2_history
+                                   where tr.ToString() != player1_history & tr.ToString() != player2_history & tr.ToString() != vinylplayer_history
                                     select tr).Distinct().ToList();
 
             if (trackListHistory.Count > 3)
