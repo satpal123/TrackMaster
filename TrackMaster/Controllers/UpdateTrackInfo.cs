@@ -36,7 +36,7 @@ namespace TrackMaster.Controllers
 
         // POST api/<UpdateTrackInfo>
         [HttpPost]
-        public void Post([FromBody] TrackModel track)
+        public async void Post([FromBody] TrackModel track)
         {
             _dataFields.Vinyl = true;
 
@@ -44,9 +44,9 @@ namespace TrackMaster.Controllers
             {
                 _dataFields.VinylTrackPlaying = string.Format("{0} - {1}", track.TrackArtist, track.TrackTitle);
 
-                _tracklisthubContext.Clients.All.SendAsync("NowPlaying", track.TrackArtist, track.TrackTitle, null, false);
+                await _tracklisthubContext.Clients.All.SendAsync("NowPlaying", track.TrackArtist, track.TrackTitle, null, false);
 
-                _discordBot.SendMessageToDiscord(_dataFields.VinylTrackPlaying);
+                await _discordBot.SendMessageToDiscord(_dataFields.VinylTrackPlaying);
                 TrackHistory(_dataFields.VinylTrackPlaying);
             }
         }

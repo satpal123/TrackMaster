@@ -4,8 +4,8 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Serilog;
-using System.Threading.Tasks;
 using TrackMaster.Helper;
 using TrackMaster.Hubs;
 using TrackMaster.Services.DiscordServices;
@@ -22,30 +22,36 @@ Log.Logger = new LoggerConfiguration()
 
 builder.Host.UseSerilog();
 
-// Access configuration
-var configuration = builder.Configuration;
+builder.Logging.AddConsole();
 
 // Configure Electron.NET and hosting options
 builder.WebHost.UseElectron(args)
                .UseKestrel()
                .UseUrls("http://*:8888");
 
-// Add services to the container
+var dataFields = new DataFields();
+
+var mainSettings = await BotSettingsHelper.GetSettingsAsync(dataFields);
+
+builder.Services.AddSingleton(mainSettings);
+
 builder.Services.AddControllersWithViews();
 builder.Services.AddSignalR();
 builder.Services.AddElectron();
-builder.Services.AddSingleton(configuration);
+
+// The Sniffy service
 builder.Services.AddSingleton<IHostedService, Sniffy>();
-builder.Services.AddSingleton<DataFields>();
+builder.Services.AddSingleton(dataFields); 
+
+// Register TwitchBot as a singleton and as a hosted service using the same instance.
 builder.Services.AddSingleton<TwitchBot>();
+builder.Services.AddHostedService(provider => provider.GetRequiredService<TwitchBot>());
+
+// Register DiscordBot as a singleton and as a hosted service using the same instance.
 builder.Services.AddSingleton<DiscordBot>();
+builder.Services.AddHostedService(provider => provider.GetRequiredService<DiscordBot>());
 
-// Add hosted services
-builder.Services.AddSingleton<IHostedService, TwitchBot>(serviceProvider => TwitchBot.Instance);
-builder.Services.AddSingleton<IHostedService, DiscordBot>(serviceProvider => DiscordBot.Instance);
-builder.Services.AddHostedService<TwitchBot>();
-builder.Services.AddHostedService<DiscordBot>();
-
+// Build the app
 var app = builder.Build();
 
 // Configure middleware
@@ -66,30 +72,25 @@ app.UseAuthorization();
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
-
 app.MapHub<TrackistHub>("/trackisthub");
 
-// Configure Electron-specific logic
-var task = Task.Run(async () =>
+// Create the Electron browser window
+var browserWindowOptions = new BrowserWindowOptions
 {
-    var browserWindowOptions = new BrowserWindowOptions
+    WebPreferences = new WebPreferences
     {
-        WebPreferences = new WebPreferences
-        {
-            NodeIntegration = false
-        },
-        Center = true,
-        Height = 880,
-        Width = 1450,
-        AutoHideMenuBar = true,
-        Resizable = true,
-        HasShadow = true
-    };
+        NodeIntegration = false
+    },
+    Center = true,
+    Height = 880,
+    Width = 1450,
+    AutoHideMenuBar = true,
+    Resizable = true,
+    HasShadow = true
+};
 
-    var browserWindow = await Electron.WindowManager.CreateWindowAsync(browserWindowOptions);
-    browserWindow.Show();
-    browserWindow.Reload();
-});
+var browserWindow = await Electron.WindowManager.CreateWindowAsync(browserWindowOptions);
+browserWindow.Show();
+browserWindow.Reload();
 
-// Run the app
 app.Run();

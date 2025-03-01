@@ -4,8 +4,8 @@
     <UserSecretsId>ffa0c55e-2a05-43d7-83e5-fc6f0904350b</UserSecretsId>
     <AssemblyVersion></AssemblyVersion>
     <FileVersion></FileVersion>
-	<Version>0.7.4-Alpha</Version>
-	<InformationalVersion>0.7.4-Alpha</InformationalVersion>
+	<Version>0.8.0-Alpha</Version>
+	<InformationalVersion>0.8.0-Alpha</InformationalVersion>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Discord.Net" Version="3.17.1" />
