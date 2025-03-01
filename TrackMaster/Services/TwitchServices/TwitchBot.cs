@@ -17,7 +17,7 @@ using TwitchLib.Communication.Models;
 
 namespace TrackMaster.Services.TwitchServices
 {
-    public class TwitchBot : IHostedService
+    public class TwitchBot : BackgroundService
     {
         private TwitchClient client;
         private readonly IHubContext<TrackistHub> _tracklisthubContext;
@@ -25,150 +25,154 @@ namespace TrackMaster.Services.TwitchServices
         private string _twitchPassword;
         private string _twitchChannel;
         private readonly ILogger _logger;
-        private Timer _timer;
         private readonly DataFields _dataFields;
+        private readonly SemaphoreSlim _doWorkLock = new(1, 1);
+        private readonly MainSettingsModel _mainSettings;
 
-        private static TwitchBot _instance;
-
-        public static TwitchBot Instance => _instance;
-
-        public TwitchBot(IHubContext<TrackistHub> synchub, ILogger<TwitchBot> logger, DataFields dataFields)
+        public TwitchBot(IHubContext<TrackistHub> synchub, ILogger<TwitchBot> logger, DataFields dataFields, MainSettingsModel mainSettings)
         {
-            _instance ??= this;
             _tracklisthubContext = synchub;
             _dataFields = dataFields;
             _logger = logger;
+            _mainSettings = mainSettings;
         }
 
-        public Task StartAsync(CancellationToken cancellationToken)
+        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             _logger.LogInformation("TwitchBot Service is Starting");
 
+            // If already connected, notify; otherwise, attempt to connect.
             if (_dataFields.IsConnectedTwitch)
             {
-                _tracklisthubContext.Clients.All.SendAsync("DeviceAndTwitchStatus", 2, "Connected to Twitch Bot!");
+                await SafeSendAsync("DeviceAndTwitchStatus", 2, "Connected to Twitch Bot!");
             }
             else
             {
-                Task.Run(async () =>
-                {
-                    await DoWork(cancellationToken);
-
-                });
+                await DoWorkAsync(stoppingToken);
             }
 
-            Task.Run(async () =>
+            // Use PeriodicTimer (available in .NET 6+ and in .NET 8) for periodic checks.
+            using var timer = new PeriodicTimer(TimeSpan.FromSeconds(10));
+            try
             {
-                await DoWork(cancellationToken);
-
-            }, cancellationToken);
-            _timer = new Timer(CheckStatus, null, TimeSpan.Zero, TimeSpan.FromSeconds(10));
-            return Task.CompletedTask;
+                while (await timer.WaitForNextTickAsync(stoppingToken))
+                {
+                    if (_dataFields.IsConnectedTwitch)
+                    {
+                        await SafeSendAsync("DeviceAndTwitchStatus", 2, "Connected to Twitch Bot!");
+                    }
+                    else
+                    {
+                        await DoWorkAsync(stoppingToken);
+                    }
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                // Expected on cancellation.
+            }
+            _logger.LogInformation("TwitchBot Service is stopping.");
         }
 
-        private void CheckStatus(object state)
+        private async Task DoWorkAsync(CancellationToken token)
         {
-            if(_dataFields.IsConnectedTwitch)
-            {
-                _tracklisthubContext.Clients.All.SendAsync("DeviceAndTwitchStatus", 2, "Connected to Twitch Bot!");
-            }
-            else
-            {
-                Task.Run(async () =>
-                {
-                    await DoWork(state);
-
-                });
-            }
-        }
-
-        private async Task DoWork(object state)
-        {
-            _logger.LogInformation("Timed Background Service is working.");
-
+            // Ensure only one instance of DoWork runs at a time.
             if (!_dataFields.IsConnectedTwitch)
             {
-                var result = await GetSetTwitchCredentials();
+                if (!await _doWorkLock.WaitAsync(0, token))
+                    return;
 
-                if (result.TwitchCredentials != null)
+                try
+                {                   
+                    if (_mainSettings.TwitchCredentials != null)
+                    {
+                        _twitchUsername = _mainSettings.TwitchCredentials.Username;
+                        _twitchPassword = _mainSettings.TwitchCredentials.Password;
+                        _twitchChannel = _mainSettings.TwitchCredentials.Channel;
+                        _dataFields.AutopostTracktoTwitch = _mainSettings.OtherSettings.AutopostTracktoTwitch;
+
+                        await BotAsync(token);
+                    }
+                }
+                catch (Exception ex)
                 {
-                    _twitchUsername = result.TwitchCredentials.Username;
-                    _twitchPassword = result.TwitchCredentials.Password;
-                    _twitchChannel = result.TwitchCredentials.Channel;
-
-                    await Bot();
+                    _logger.LogError($"Error in DoWork: {ex.Message}");
+                }
+                finally
+                {
+                    _doWorkLock.Release();
                 }
             }
         }
 
-        public Task StopAsync(CancellationToken cancellationToken)
+        public override async Task StopAsync(CancellationToken cancellationToken)
         {
             _dataFields.IsConnectedTwitch = false;
             _dataFields.TwitchBotManuallyStopped = true;
-            client.Disconnect();
-            _logger.LogError("TwitchBot Service is Stopping");
-            return Task.CompletedTask;
+            client?.Disconnect();
+            _logger.LogInformation("TwitchBot Service is stopping.");
+            await base.StopAsync(cancellationToken);
         }
 
-        private async Task Bot()
+        private async Task BotAsync(CancellationToken token)
         {
             try
             {
                 if (string.IsNullOrEmpty(_twitchUsername) || string.IsNullOrEmpty(_twitchPassword))
-                    throw new ArgumentException();
+                    throw new ArgumentException("Twitch credentials are missing.");
 
-                await Task.Run(() => {
-                    ConnectionCredentials credentials = new(_twitchUsername, _twitchPassword);
-                    var clientOptions = new ClientOptions
-                    {
-                        MessagesAllowedInPeriod = 750,
-                        ThrottlingPeriod = TimeSpan.FromSeconds(30)
-                    };
-                    WebSocketClient customClient = new(clientOptions);
-                    client = new TwitchClient(customClient);
-                    client.Initialize(credentials, _twitchChannel);
-                    client.OnMessageReceived += Client_OnMessageReceived;
-                    client.OnConnectionError += Client_OnConnectionError;
-                    client.OnIncorrectLogin += Client_OnIncorrectLogin;
-                    client.OnConnected += Client_OnConnected;
-                    client.OnJoinedChannel += Client_OnJoinedChannel;
-                    client.Connect();
-                });
+                ConnectionCredentials credentials = new(_twitchUsername, _twitchPassword);
+                var clientOptions = new ClientOptions
+                {
+                    MessagesAllowedInPeriod = 750,
+                    ThrottlingPeriod = TimeSpan.FromSeconds(30)
+                };
+                WebSocketClient customClient = new(clientOptions);
+                client = new TwitchClient(customClient);
+                client.Initialize(credentials, _twitchChannel);
+
+                // Attach event handlers.
+                client.OnMessageReceived += Client_OnMessageReceived;
+                client.OnConnectionError += Client_OnConnectionError;
+                client.OnIncorrectLogin += Client_OnIncorrectLogin;
+                client.OnConnected += Client_OnConnected;
+                client.OnJoinedChannel += Client_OnJoinedChannel;
+
+                client.Connect();
             }
             catch (Exception ex)
             {
-                Console.WriteLine("Twitch Bot not configured! ");
-                _logger.LogError("Twitch Bot not configured!" + ex.Message);
-                await _tracklisthubContext.Clients.All.SendAsync("DeviceAndTwitchStatus", 2, ex.Message);
+                _logger.LogError("Twitch Bot not configured: " + ex.Message);
+                await SafeSendAsync("DeviceAndTwitchStatus", 2, ex.Message);
                 _dataFields.IsConnectedTwitch = false;
             }
         }
 
-        private void Client_OnJoinedChannel(object sender, OnJoinedChannelArgs e)
+        private async void Client_OnJoinedChannel(object sender, OnJoinedChannelArgs e)
         {
-            _tracklisthubContext.Clients.All.SendAsync("ReceiveMessage", "twitch", $"Connected to {e.Channel}");
+            await SafeSendAsync("ReceiveMessage", "twitch", $"Connected to {e.Channel}");
         }
 
-        private void Client_OnIncorrectLogin(object sender, OnIncorrectLoginArgs e)
+        private async void Client_OnIncorrectLogin(object sender, OnIncorrectLoginArgs e)
         {
             _logger.LogError("Twitch Bot incorrect login");
 
-            _tracklisthubContext.Clients.All.SendAsync("DeviceAndTwitchStatus", 2, "Twitch Bot incorrect login!");
+            await SafeSendAsync("DeviceAndTwitchStatus", 2, "Twitch Bot incorrect login!");
         }
 
-        private void Client_OnConnectionError(object sender, OnConnectionErrorArgs e)
+        private async void Client_OnConnectionError(object sender, OnConnectionErrorArgs e)
         {
             _logger.LogError("Twitch Bot connection retry");
 
-            _tracklisthubContext.Clients.All.SendAsync("DeviceAndTwitchStatus", 2, "Twitch Bot connection retry!");
+            await SafeSendAsync("DeviceAndTwitchStatus", 2, "Twitch Bot connection retry!");
         }
 
-        private void Client_OnConnected(object sender, OnConnectedArgs e)
+        private async void Client_OnConnected(object sender, OnConnectedArgs e)
         {
             if (!_dataFields.TwitchBotManuallyStopped)
             {
                 _dataFields.IsConnectedTwitch = true;
-                _tracklisthubContext.Clients.All.SendAsync("DeviceAndTwitchStatus", 2, "Connected to Twitch Bot!");
+                await SafeSendAsync("DeviceAndTwitchStatus", 2, "Connected to Twitch Bot!");
             }
         }
 
@@ -191,23 +195,18 @@ namespace TrackMaster.Services.TwitchServices
             }
         }
 
-        private async Task<MainSettingsModel> GetSetTwitchCredentials()
+        /// <summary>
+        /// Helper method to safely send SignalR messages.
+        /// </summary>
+        private async Task SafeSendAsync(string method, object arg1, object arg2)
         {
-            SettingsHelper settingsHelper = new(_dataFields);
-
-            if (HybridSupport.IsElectronActive)
+            try
             {
-                string path = await Electron.App.GetPathAsync(PathName.UserData);
-
-                Console.WriteLine("Twitch: " + path);
-                _dataFields.Appfullpath = path + @"\Settings.json";
-                return settingsHelper.GetSettings(_dataFields.Appfullpath);
+                await _tracklisthubContext.Clients.All.SendAsync(method, arg1, arg2);
             }
-            else
+            catch (Exception ex)
             {
-                var appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-                _dataFields.Appfullpath = appDataPath + @"\Electron\Settings.json";
-                return settingsHelper.GetSettings(_dataFields.Appfullpath);
+                _logger.LogError($"Error sending message '{method}': {ex.Message}");
             }
         }
     }

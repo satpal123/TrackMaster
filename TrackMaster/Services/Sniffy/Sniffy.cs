@@ -54,10 +54,11 @@ namespace TrackMaster.Services.Sniffy
         
         private readonly ILogger _logger;               
         private List<int> totallist;
-        private Timer _timer;
         private readonly DataFields _dataFields;
 
         private RestoreTrackMetadataModel RestoreTrackMetadataModel;
+
+        private OverlayChangeObserver _overlayObserver;
 
         #endregion
         public Sniffy(IConfiguration configuration, IHubContext<TrackistHub> synchub, ILogger<Sniffy> logger, DataFields dataFields, TwitchBot twitchBot, DiscordBot discordBot)
@@ -69,118 +70,106 @@ namespace TrackMaster.Services.Sniffy
             _logger = logger;
             _twitchBot = twitchBot;
             _discordBot = discordBot;
+
+            // Initialize the observer once
+            _overlayObserver = new OverlayChangeObserver(_dataFields);
+            _overlayObserver.MixStatusChanged += MixStatusChanged;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            stoppingToken.Register(() =>
-                Console.WriteLine($"StatusCheckerService background task is stopping."));
-            while (!stoppingToken.IsCancellationRequested)
+            stoppingToken.Register(() => _logger.LogInformation("Sniffy background task is stopping."));
+
+            // Optionally perform initial work...
+            if (!_dataFields.ControllerFound)
             {
-                try
-                {
-                    if (_dataFields.ControllerFound == false)
-                    {
-                        await CapturePacketsInitialAsync();
-                    }
-
-                    RestoreTracks();
-
-                    _timer = new(DoWork, null, TimeSpan.Zero, TimeSpan.FromSeconds(1));
-                    await CapturePacketsAsync();
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex.Message);
-                }
+                await CapturePacketsInitialAsync(stoppingToken);
             }
-            Console.WriteLine($"StatusCheckerService background task is stopping.");
+            RestoreTracks();
+
+            // Start the observer asynchronously, but do not await it immediately.
+            Task overlayTask = _overlayObserver.StartAsync(stoppingToken);
+
+            // Start the packet capture concurrently.
+            Task captureTask = CapturePacketsAsync(stoppingToken);
+
+            _logger.LogInformation("Sniffy background task has stopped.");
         }
 
         private void RestoreTracks()
         {
             var result = GetSetRestoreTrackMetadata();
-
-            if (result.PlayersTrackMetaDataModel != null)
+            if (result?.PlayersTrackMetaDataModel != null)
             {
                 _dataFields.Trackartist1 = result.PlayersTrackMetaDataModel.Trackartist1;
                 _dataFields.Tracktitle1 = result.PlayersTrackMetaDataModel.Tracktitle1;
-                _dataFields.Trackpath = _dataFields.Tracktitle1 != null & _dataFields.Trackartist1 != null
-                        ? _dataFields.Trackartist1 + " - " + _dataFields.Tracktitle1
-                        : _dataFields.Tracktitle1 != null & _dataFields.Trackartist1 == null ? _dataFields.Tracktitle1 : "ID - ID";
+                _dataFields.Trackpath = (_dataFields.Tracktitle1 != null && _dataFields.Trackartist1 != null)
+                    ? $"{_dataFields.Trackartist1} - {_dataFields.Tracktitle1}"
+                    : _dataFields.Tracktitle1 ?? "ID - ID";
 
                 _dataFields.Trackartist2 = result.PlayersTrackMetaDataModel.Trackartist2;
                 _dataFields.Tracktitle2 = result.PlayersTrackMetaDataModel.Tracktitle2;
-                _dataFields.Trackpath2 = _dataFields.Tracktitle2 != null & _dataFields.Trackartist2 != null
-                   ? _dataFields.Trackartist2 + " - " + _dataFields.Tracktitle2
-                   : _dataFields.Tracktitle2 != null & _dataFields.Trackartist2 == null ? _dataFields.Tracktitle2 : "ID - ID";
+                _dataFields.Trackpath2 = (_dataFields.Tracktitle2 != null && _dataFields.Trackartist2 != null)
+                    ? $"{_dataFields.Trackartist2} - {_dataFields.Tracktitle2}"
+                    : _dataFields.Tracktitle2 ?? "ID - ID";
             }
         }
 
-        private void DoWork(object state)
+        private async Task CapturePacketsInitialAsync(CancellationToken stoppingToken)
         {
-            OverlayChangeObserver overlayObserver = new(_dataFields);
-            overlayObserver.MixStatusChanged += MixStatusChanged;
-            overlayObserver.Start();
+            j = await GetConnectedControllerIPAsync(stoppingToken);
         }
 
-        private async Task CapturePacketsInitialAsync()
+        private async Task CapturePacketsAsync(CancellationToken token)
         {
-            j = await GetConnectedControllerIPAsync();
-        }
+            // Retrieve the device list
+            var devices = CaptureDeviceList.Instance;
+            if (devices.Count < 1)
+            {
+                _logger.LogError("No devices were found on this machine");
+                await _tracklisthubContext.Clients.All.SendAsync("DeviceAndTwitchStatus", 2, "No devices were found on this machine");
+                return;
+            }
 
-        private async Task CapturePacketsAsync()
-        {
-                await Task.Run(() =>
-                {
-                    // Retrieve the device list
-                    var devices = CaptureDeviceList.Instance;
+            int i = int.Parse(j.ToString());
+            var device = devices[i];
 
-                    // If no devices were found print an error
-                    if (devices.Count < 1)
-                    {
-                        Console.WriteLine("No devices were found on this machine");
-                        _logger.LogError("No devices were found on this machine");
+            // Register our packet arrival handlers.
+            device.OnPacketArrival += new PacketArrivalEventHandler(Device_OnPacketArrivalUdp);
+            device.OnPacketArrival += new PacketArrivalEventHandler(Device_OnPacketArrivalTcp);
 
-                        _tracklisthubContext.Clients.All.SendAsync("DeviceAndTwitchStatus", 2, "No devices were found on this machine");
-                        return;
-                    }
-
-                    int i = 0;
-
-                    i = int.Parse(j.ToString());
-
-                    using var device = devices[i];
-
-                    // Register our handler function to the 'packet arrival' event
-                    device.OnPacketArrival += new PacketArrivalEventHandler(Device_OnPacketArrivalUdp);
-                    device.OnPacketArrival += new PacketArrivalEventHandler(Device_OnPacketArrivalTcp);
-
-                    // Open the device for capturing
-                    int readTimeoutMilliseconds = 2500;
-
-                    if (device is LibPcapLiveDevice)
-                    {
-                        var livePcapDevice = device as LibPcapLiveDevice;
-                        livePcapDevice.Open(DeviceModes.Promiscuous, readTimeoutMilliseconds);
-                    }
-                    else
-                    {
-                        _logger.LogError("unknown device type of " + device.GetType().ToString());
-                        throw new InvalidOperationException("unknown device type of " + device.GetType().ToString());
-                    }
+            int readTimeoutMilliseconds = 2500;
+            if (device is LibPcapLiveDevice liveDevice)
+            {
+                liveDevice.Open(DeviceModes.Promiscuous, readTimeoutMilliseconds);
+            }
+            else
+            {
+                _logger.LogError("Unknown device type: " + device.GetType().ToString());
+                throw new InvalidOperationException("Unknown device type: " + device.GetType().ToString());
+            }
 
                     Console.WriteLine("Capture Started on " + device.Description);
-                    // Start the capturing process
+            device.StartCapture();
 
-                    device.StartCapture();
-
-                    Console.ReadLine();
-                });
-                
+            try
+            {
+                // Wait indefinitely until cancellation is requested.
+                await Task.Delay(Timeout.Infinite, token);
+            }
+            catch (TaskCanceledException)
+            {
+                // Expected when token is cancelled.
+            }
+            finally
+            {
+                device.StopCapture();
+                device.Close();
+                _logger.LogInformation("Capture stopped on " + device.Description);
+            }
         }
 
-        private async Task<int> GetConnectedControllerIPAsync()
+        private async Task<int> GetConnectedControllerIPAsync(CancellationToken stoppingToken)
         {
             // Retrieve the device list
             var devices = CaptureDeviceList.Instance;
@@ -200,7 +189,7 @@ namespace TrackMaster.Services.Sniffy
 
                        i = devices.IndexOf(dev);
 
-                        await AutoConfigureAsync(i, devices);
+                        await AutoConfigureAsync(i, devices, stoppingToken);
 
                         if (_dataFields.ControllerFound)
                             break;
@@ -212,32 +201,48 @@ namespace TrackMaster.Services.Sniffy
             return i;
         }
 
-        private async Task AutoConfigureAsync(int i, CaptureDeviceList devices)
+        private async Task AutoConfigureAsync(int i, CaptureDeviceList devices, CancellationToken cancellationToken)
         {
             using var device = devices[i];
 
             await _tracklisthubContext.Clients.All.SendAsync("DeviceAndTwitchStatus", 3, "Searching for Device...");
 
-            // Register our handler function to the 'packet arrival' event
-            device.OnPacketArrival += new PacketArrivalEventHandler(Device_OnPacketArrivalUdpInitial);
+            // Register our handler function to the 'packet arrival' event.
+            device.OnPacketArrival += Device_OnPacketArrivalUdpInitial;
 
-            // Open the device for capturing
             int readTimeoutMilliseconds = 2500;
-           if (device is LibPcapLiveDevice)
+            if (device is LibPcapLiveDevice livePcapDevice)
             {
-                var livePcapDevice = device as LibPcapLiveDevice;
                 livePcapDevice.Open(DeviceModes.Promiscuous, readTimeoutMilliseconds);
             }
             else
             {
-                throw new InvalidOperationException("unknown device type of " + device.GetType().ToString());
+                throw new InvalidOperationException("Unknown device type of " + device.GetType());
             }
 
-            // Start the capturing process
+            // Start the capturing process.
             device.StartCapture();
+            _logger.LogInformation("AutoConfigure capture started on " + device.Description);
 
-            await Task.Delay(6000);
-            device.StopCapture();
+            try
+            {
+                // Wait for a fixed period (or until cancellation is requested).
+                await Task.Delay(6000, cancellationToken);
+            }
+            catch (TaskCanceledException)
+            {
+                _logger.LogInformation("AutoConfigure capture delay canceled.");
+            }
+            finally
+            {
+                // Stop and close the device to clean up resources.
+                device.StopCapture();
+                device.Close();
+                _logger.LogInformation("AutoConfigure capture stopped on " + device.Description);
+
+                // Optionally, unsubscribe the event handler if it won't be needed further.
+                //device.OnPacketArrival -= Device_OnPacketArrivalUdpInitial;
+            }
         }
 
         private void Device_OnPacketArrivalUdpInitial(object sender, PacketCapture e)
@@ -739,23 +744,23 @@ namespace TrackMaster.Services.Sniffy
             return Encoding.BigEndianUnicode.GetString(bb);
         }
 
-        private void MixStatusChanged(object sender, OverlayChangeObserver.MixStatusChangedEventArgs e)
+        private async void MixStatusChanged(object sender, OverlayChangeObserver.MixStatusChangedEventArgs e)
         {
             if (e.Player1)
             {
-                _tracklisthubContext.Clients.All.SendAsync("NowPlaying", _dataFields.Trackartist1, _dataFields.Tracktitle1, _dataFields.Albumartid1, _dataFields.ShowArtwork);
+                await _tracklisthubContext.Clients.All.SendAsync("NowPlaying", _dataFields.Trackartist1, _dataFields.Tracktitle1, _dataFields.Albumartid1, _dataFields.ShowArtwork);
                 TrackHistory(_dataFields.Trackpath);
 
-                _discordBot.SendMessageToDiscord(_dataFields.Trackpath);
+                await _discordBot.SendMessageToDiscord(_dataFields.Trackpath);
                 _twitchBot.CurrentTrackPlaying(_dataFields.Trackpath);
 
             }
             if (e.Player2)
             {
-                _tracklisthubContext.Clients.All.SendAsync("NowPlaying", _dataFields.Trackartist2, _dataFields.Tracktitle2, _dataFields.Albumartid2, _dataFields.ShowArtwork);
+                await _tracklisthubContext.Clients.All.SendAsync("NowPlaying", _dataFields.Trackartist2, _dataFields.Tracktitle2, _dataFields.Albumartid2, _dataFields.ShowArtwork);
                 TrackHistory(_dataFields.Trackpath2);
 
-                _discordBot.SendMessageToDiscord(_dataFields.Trackpath2);
+                await _discordBot.SendMessageToDiscord(_dataFields.Trackpath2);
                 _twitchBot.CurrentTrackPlaying(_dataFields.Trackpath2);
             }
         }
@@ -786,8 +791,12 @@ namespace TrackMaster.Services.Sniffy
         {
             public static string GetAssemblyVersion()
             {
-                AssemblyInformationalVersionAttribute infoVersion = (AssemblyInformationalVersionAttribute)Assembly.GetExecutingAssembly().GetCustomAttributes(typeof(AssemblyInformationalVersionAttribute), false).FirstOrDefault();
-                return infoVersion.InformationalVersion;
+                var version = Assembly.GetExecutingAssembly()
+                          .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?
+                          .InformationalVersion;
+
+                var match = Regex.Match(version, @"^\d+\.\d+\.\d+(-[a-zA-Z0-9]+)?").ToString();
+                return match;
             }
         }
 

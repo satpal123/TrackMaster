@@ -49,5 +49,8 @@ namespace TrackMaster.Helper
         public string Key2 { get; set; }
         public string Genre1 { get; set; }
         public string Genre2 { get; set; }
+
+        public bool Vinyl { get; set; }
+        public string VinylTrackPlaying { get; set; }
     }
 }
