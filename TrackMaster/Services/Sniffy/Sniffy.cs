@@ -506,125 +506,148 @@ namespace TrackMaster.Services.Sniffy
 
         private void Player1(string result)
         {
-            countrbidoccurance1 = globalrekordboxid1 != null ? Regex.Matches(result, globalrekordboxid1).Count : 0;
-
-            if(!trackloaded_player1)
-            {
-                //This will insure the data is for the Track Metadata
-                if (countrbidoccurance1 >= 2)
-                {
-                    var returnMetaData = GetTrackMetaData(result);
-
-                    if (returnMetaData != null)
-                    {
-                        if (returnMetaData.TrackTitle != null | returnMetaData.ArtistName != null)
-                        {
-                            _dataFields.Tracktitle1 = returnMetaData.TrackTitle;
-                            _dataFields.Trackartist1 = returnMetaData.ArtistName;
-                            _dataFields.Duration1 = returnMetaData.Duration;
-                            _dataFields.Key1 = returnMetaData.Key; _dataFields.Genre1 = returnMetaData.Genre;
-
-                            _dataFields.Trackpath = _dataFields.Tracktitle1 != null & _dataFields.Trackartist1 != null
-                                ? _dataFields.Trackartist1 + " - " + _dataFields.Tracktitle1
-                                : _dataFields.Tracktitle1 != null & _dataFields.Trackartist1 == null ? _dataFields.Tracktitle1 : "ID - ID";
-
-                            _tracklisthubContext.Clients.All.SendAsync("PlayerOne", 5, _dataFields.Tracktitle1);
-                            _tracklisthubContext.Clients.All.SendAsync("PlayerOne", 6, _dataFields.Trackartist1);
-                            _tracklisthubContext.Clients.All.SendAsync("PlayerOne", 8, _dataFields.Duration1);
-                            _tracklisthubContext.Clients.All.SendAsync("PlayerOne", 9, _dataFields.Key1);
-                            _tracklisthubContext.Clients.All.SendAsync("PlayerOne", 10, _dataFields.Genre1);
-
-                            trackloaded_player1 = true;
-
-                            RestoreTrackMetadata restoreTrackMetadata = new(_dataFields);
-                            restoreTrackMetadata.SetMainSettings(_dataFields);
-                            RestoreTrackMetadataModel = restoreTrackMetadata.GetSettings(_dataFields.RestoreTrackspath);
-                        }
-                    }
-                }
-            }
-
-            if (!AlbumArtloaded_player1)
-            {
-                //This will insure the data is for the Album art which is the filename path
-                if (countrbidoccurance1 >= 1)
-                {
-                    var returnAlbumArtData = GetAlbumArtData(result);
-
-                    if (returnAlbumArtData != null)
-                    {
-                        if (returnAlbumArtData.AlbumArt != null)
-                        {
-                            _dataFields.Albumartid1 = returnAlbumArtData.AlbumArt;
-                            _tracklisthubContext.Clients.All.SendAsync("PlayerOne", 7, _dataFields.Albumartid1);
-
-                            AlbumArtloaded_player1 = true;
-                        }
-                    }
-                }
-            }
-            
+            ProcessPlayerData(result, 1);
         }
 
         private void Player2(string result)
         {
-            countrbidoccurance2 = globalrekordboxid2 != null ? Regex.Matches(result, globalrekordboxid2).Count : 0;
+            ProcessPlayerData(result, 2);
+        }
 
-            if(!trackloaded_player2)
+        /// <summary>
+        /// Processes track metadata and album art data for a specific player.
+        /// Consolidates duplicate logic from Player1 and Player2 methods.
+        /// </summary>
+        /// <param name="result">The packet data to process</param>
+        /// <param name="playerNumber">Player number (1 or 2)</param>
+        private void ProcessPlayerData(string result, int playerNumber)
+        {
+            // Get player-specific variables
+            var (globalRekordboxId, countRbIdOccurrence, trackLoaded, albumArtLoaded) = playerNumber switch
             {
-                if (countrbidoccurance2 >= 2)
+                1 => (globalrekordboxid1, countrbidoccurance1, trackloaded_player1, AlbumArtloaded_player1),
+                2 => (globalrekordboxid2, countrbidoccurance2, trackloaded_player2, AlbumArtloaded_player2),
+                _ => throw new ArgumentException($"Invalid player number: {playerNumber}")
+            };
+
+            // Update occurrence count
+            countRbIdOccurrence = globalRekordboxId != null ? Regex.Matches(result, globalRekordboxId).Count : 0;
+            if (playerNumber == 1)
+                countrbidoccurance1 = countRbIdOccurrence;
+            else
+                countrbidoccurance2 = countRbIdOccurrence;
+
+            string playerHubMethod = playerNumber == 1 ? "PlayerOne" : "PlayerTwo";
+
+            // Process track metadata
+            if (!trackLoaded && countRbIdOccurrence >= 2)
+            {
+                var returnMetaData = GetTrackMetaData(result);
+
+                if (returnMetaData?.TrackTitle != null || returnMetaData?.ArtistName != null)
                 {
-                    var returnMetaData = GetTrackMetaData(result);
+                    SetTrackMetadata(playerNumber, returnMetaData);
 
-                    if (returnMetaData != null)
-                    {
-                        if (returnMetaData.TrackTitle != null | returnMetaData.ArtistName != null)
-                        {
-                            _dataFields.Tracktitle2 = returnMetaData.TrackTitle; ;
-                            _dataFields.Trackartist2 = returnMetaData.ArtistName;
-                            _dataFields.Duration2 = returnMetaData.Duration;
-                            _dataFields.Key2 = returnMetaData.Key;
-                            _dataFields.Genre2 = returnMetaData.Genre;
+                    string trackPath = BuildTrackPath(playerNumber);
 
-                            _dataFields.Trackpath2 = _dataFields.Tracktitle2 != null & _dataFields.Trackartist2 != null
-                            ? _dataFields.Trackartist2 + " - " + _dataFields.Tracktitle2
-                            : _dataFields.Tracktitle2 != null & _dataFields.Trackartist2 == null ? _dataFields.Tracktitle2 : "ID - ID";
+                    // Send track metadata to clients
+                    _tracklisthubContext.Clients.All.SendAsync(playerHubMethod, 5, GetTrackTitle(playerNumber));
+                    _tracklisthubContext.Clients.All.SendAsync(playerHubMethod, 6, GetTrackArtist(playerNumber));
+                    _tracklisthubContext.Clients.All.SendAsync(playerHubMethod, 8, GetDuration(playerNumber));
+                    _tracklisthubContext.Clients.All.SendAsync(playerHubMethod, 9, GetKey(playerNumber));
+                    _tracklisthubContext.Clients.All.SendAsync(playerHubMethod, 10, GetGenre(playerNumber));
 
-                            _tracklisthubContext.Clients.All.SendAsync("PlayerTwo", 5, _dataFields.Tracktitle2);
-                            _tracklisthubContext.Clients.All.SendAsync("PlayerTwo", 6, _dataFields.Trackartist2);
-                            _tracklisthubContext.Clients.All.SendAsync("PlayerTwo", 8, _dataFields.Duration2);
-                            _tracklisthubContext.Clients.All.SendAsync("PlayerTwo", 9, _dataFields.Key2);
-                            _tracklisthubContext.Clients.All.SendAsync("PlayerTwo", 10, _dataFields.Genre2);
+                    // Update track loaded state
+                    if (playerNumber == 1)
+                        trackloaded_player1 = true;
+                    else
+                        trackloaded_player2 = true;
 
-                            trackloaded_player2 = true;
-
-                            RestoreTrackMetadata restoreTrackMetadata = new(_dataFields);
-                            
-                            restoreTrackMetadata.SetMainSettings(_dataFields);
-                            RestoreTrackMetadataModel = restoreTrackMetadata.GetSettings(_dataFields.RestoreTrackspath);
-                        }
-                    }
+                    RestoreTrackMetadata restoreTrackMetadata = new(_dataFields);
+                    restoreTrackMetadata.SetMainSettings(_dataFields);
+                    RestoreTrackMetadataModel = restoreTrackMetadata.GetSettings(_dataFields.RestoreTrackspath);
                 }
             }
-            if (!AlbumArtloaded_player2)
-            {
-                //This will insure the data is for the Album art which is the filename path 
-                if (countrbidoccurance2 >= 1)
-                {
-                    var returnAlbumArtData = GetAlbumArtData(result);
-                    if (returnAlbumArtData != null)
-                    {
-                        if (returnAlbumArtData.AlbumArt != null)
-                        {
-                            _dataFields.Albumartid2 = returnAlbumArtData.AlbumArt;
-                            _tracklisthubContext.Clients.All.SendAsync("PlayerTwo", 7, _dataFields.Albumartid2);
 
-                            AlbumArtloaded_player2 = true;
-                        }
-                    }
+            // Process album art
+            if (!albumArtLoaded && countRbIdOccurrence >= 1)
+            {
+                var returnAlbumArtData = GetAlbumArtData(result);
+
+                if (returnAlbumArtData?.AlbumArt != null)
+                {
+                    SetAlbumArt(playerNumber, returnAlbumArtData.AlbumArt);
+                    _tracklisthubContext.Clients.All.SendAsync(playerHubMethod, 7, returnAlbumArtData.AlbumArt);
+
+                    // Update album art loaded state
+                    if (playerNumber == 1)
+                        AlbumArtloaded_player1 = true;
+                    else
+                        AlbumArtloaded_player2 = true;
                 }
-            }               
+            }
         }
+
+        /// <summary>
+        /// Sets track metadata for the specified player.
+        /// </summary>
+        private void SetTrackMetadata(int playerNumber, TrackMetaDataModel metadata)
+        {
+            if (playerNumber == 1)
+            {
+                _dataFields.Tracktitle1 = metadata.TrackTitle;
+                _dataFields.Trackartist1 = metadata.ArtistName;
+                _dataFields.Duration1 = metadata.Duration;
+                _dataFields.Key1 = metadata.Key;
+                _dataFields.Genre1 = metadata.Genre;
+            }
+            else
+            {
+                _dataFields.Tracktitle2 = metadata.TrackTitle;
+                _dataFields.Trackartist2 = metadata.ArtistName;
+                _dataFields.Duration2 = metadata.Duration;
+                _dataFields.Key2 = metadata.Key;
+                _dataFields.Genre2 = metadata.Genre;
+            }
+        }
+
+        /// <summary>
+        /// Builds the track path string for the specified player.
+        /// </summary>
+        private string BuildTrackPath(int playerNumber)
+        {
+            var (trackTitle, trackArtist) = playerNumber == 1
+                ? (_dataFields.Tracktitle1, _dataFields.Trackartist1)
+                : (_dataFields.Tracktitle2, _dataFields.Trackartist2);
+
+            string trackPath = trackTitle != null && trackArtist != null
+                ? $"{trackArtist} - {trackTitle}"
+                : trackTitle != null && trackArtist == null ? trackTitle : "ID - ID";
+
+            if (playerNumber == 1)
+                _dataFields.Trackpath = trackPath;
+            else
+                _dataFields.Trackpath2 = trackPath;
+
+            return trackPath;
+        }
+
+        /// <summary>
+        /// Sets album art ID for the specified player.
+        /// </summary>
+        private void SetAlbumArt(int playerNumber, string albumArtId)
+        {
+            if (playerNumber == 1)
+                _dataFields.Albumartid1 = albumArtId;
+            else
+                _dataFields.Albumartid2 = albumArtId;
+        }
+
+        private string GetTrackTitle(int playerNumber) => playerNumber == 1 ? _dataFields.Tracktitle1 : _dataFields.Tracktitle2;
+        private string GetTrackArtist(int playerNumber) => playerNumber == 1 ? _dataFields.Trackartist1 : _dataFields.Trackartist2;
+        private string GetDuration(int playerNumber) => playerNumber == 1 ? _dataFields.Duration1 : _dataFields.Duration2;
+        private string GetKey(int playerNumber) => playerNumber == 1 ? _dataFields.Key1 : _dataFields.Key2;
+        private string GetGenre(int playerNumber) => playerNumber == 1 ? _dataFields.Genre1 : _dataFields.Genre2;
 
         private static TrackMetaDataModel GetTrackMetaData(string result)
         {
